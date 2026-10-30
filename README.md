@@ -6,6 +6,21 @@
 [![OS](https://img.shields.io/badge/OS-Windows%2010%20%2F%2011%20%7C%20WSL2-orange.svg)](#)
 [![Secure Boot](https://img.shields.io/badge/Secure%20Boot-Compatible%20(Custom%20DB)-blueviolet.svg)](#)
 
+---
+
+> [!IMPORTANT]
+> # 🌟 Special Dedication & Huge Thanks to geo8 ([`geodnb`](https://github.com/geodnb))
+> ### 🏆 The Project That Started It All: [**Ada Unlock Readiness Check (`AdaUnlockCheck`)**](https://github.com/geodnb/RTX40-series-tensor-unlock-readiness-checker)
+> 
+> **A massive, heartfelt personal thank you to [geo8 (`geodnb`)](https://github.com/geodnb)!**
+> 
+> My entire work on this project was sparked directly by his tool: [**`RTX40-series-tensor-unlock-readiness-checker`**](https://github.com/geodnb/RTX40-series-tensor-unlock-readiness-checker). Running `AdaUnlockCheck` on my own hardware gave me the critical register verification, diagnostic baseline, and the direct inspiration I needed to build this universal, 1-click dynamic UEFI pre-boot unlocker.
+>
+> Without his pioneering diagnostic framework and public research, this universal Windows release would simply not exist today. **Thank you, geo8! 🙌**
+
+---
+
+
 A universal, automated, one-click UEFI pre-boot tool that completely removes the hardware/firmware rate limiter on **NVIDIA GeForce RTX 40 Series (Ada Lovelace)** and **RTX 30 Series (Ampere)** graphics cards. 
 
 The unlock takes place purely in volatile GPU RAM during pre-boot; **zero bits are written to the VBIOS EEPROM**. The unmodified official Windows NVIDIA driver (`nvlddmkm.sys`) loads immediately afterwards, recognizing the fully unlocked tensor cores across Windows, PyTorch, CUDA, WSL2, and Docker.
@@ -117,9 +132,7 @@ ightarrow$ **Key Management** (or *Custom Key Management*).
 
 ## 🙏 Acknowledgements & Credits
 
-Special thanks to the community pioneers who made this possible:
-* **geo8 / geodnb:** For creating the original **Ada Unlock Readiness Check** tool (`AdaUnlockCheck`) and diagnostics framework that initiated this hardware porting project!
+* 🌟 **[geo8 / geodnb](https://github.com/geodnb) (Special Dedication):** Creator of the original [**Ada Unlock Readiness Check (`RTX40-series-tensor-unlock-readiness-checker`)**](https://github.com/geodnb/RTX40-series-tensor-unlock-readiness-checker). His diagnostic suite and hardware register analysis were the direct catalyst and inspiration for this entire universal Windows project. Special personal thanks for sparking this breakthrough!
 * **Zagitta & WildFlash1st:** For pioneering the Linux `gpu-unlock` research and `cmp90hx-unlock` rejoining methodologies.
 * **TOTORONG & JustAResearcher:** For early proof-of-concept Windows UEFI implementations.
 * **Igor Wallossek (Igor'sLAB):** For in-depth technical analysis, power verification, and community discussion.
-
