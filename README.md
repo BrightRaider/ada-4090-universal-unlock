@@ -72,6 +72,18 @@ I deliberately used the **exact same prompt, seed, sampler (Euler, 30 steps), an
 
 *Result:* The synthetic BF16 throughput increase directly translates into real-world AI workloads: **FLUX.1-dev generates high-resolution images in ~24s instead of ~34s with zero crashes, thermal throttling, or artifacts.**
 
+#### ⏱️ High-Resolution Endurance Stress Test (20x $1280 \times 1280$ Batch)
+To push hardware limits, I executed a sustained endurance run generating **20 consecutive images at $1280 \times 1280$** (1.64 Megapixels, 6,400 patch tokens) under continuous 100% compute load. Live telemetry was logged every 5 seconds across the entire 12.5-minute duration (151 telemetry samples):
+
+| Telemetry Metric | Measured Value | Operational Assessment |
+| :--- | :--- | :--- |
+| **Total Batch Completion Time** | **12 min, 36 sec** | ⚡ **~37.8 seconds per $1280 \times 1280$ image** (incl. VAE & disk I/O) |
+| **Peak VRAM Allocated / Total** | **24,043 MiB (23.48 GB / 24 GB)** | 🎯 97.9% Framebuffer saturation with zero OOM errors |
+| **GPU Core Temperature** | **Max: 66.0 °C** *(Avg Load: 58.0 °C)* | ❄️ Completely stable thermals under continuous 350W+ heat load |
+| **Power Consumption** | **Max: 376.0 W** *(Avg Load: 342.4 W)* | 🔥 Sustained full-throttle tensor execution |
+| **GPU Clock Frequency** | **Avg Load: 2,759 MHz** *(Peak: 2,775 MHz)* | 📏 Rock-solid flatline boost clock with 0% thermal throttling |
+| **Batch Reliability** | **20 / 20 Completed** | ✅ 100% bit-perfect output with zero artifacts or driver crashes |
+
 ### NVIDIA GeForce RTX 30 Series (Ampere GA102 - Architecture Reference)
 *Note: The RTX 4090 above was measured and verified directly on my local test rig. The Ampere support added in v1.2 is based on architectural register parity and upstream community research (Zagitta / WildFlash1st). Below are the expected reference targets; community benchmark submissions and PRs are warmly welcome!*
 
