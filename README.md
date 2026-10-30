@@ -76,7 +76,9 @@ Measured on real hardware under Windows:
 
 If your system has UEFI Secure Boot enabled:
 1. During boot, enter BIOS Setup (**Del** key).
-2. Navigate to **Security** $ightarrow$ **Secure Boot** $ightarrow$ **Key Management** (or *Custom Key Management*).
+2. Navigate to **Security** $
+ightarrow$ **Secure Boot** $
+ightarrow$ **Key Management** (or *Custom Key Management*).
 3. Select **"Append Key"** / **"Enroll Signature"** under the **Authorized Signatures (db)** menu.
 4. Select your USB drive and choose **`AdaUnlock_SecureBoot.cer`**.
 5. Save changes and reboot (**F10**).
@@ -111,3 +113,13 @@ If your system has UEFI Secure Boot enabled:
 - **Zero VBIOS Flashing:** The VBIOS EEPROM chip is **never** written to.
 - **Volatile RAM-only:** All register modifications exist solely in GPU RAM and are completely erased on power-off or warm reboot.
 - **Fail-Safe Containment:** If any checksum, architecture check, or MMIO verification fails during pre-boot, the tool aborts safely and boots unmodified stock Windows.
+---
+
+## 🙏 Acknowledgements & Credits
+
+Special thanks to the community pioneers who made this possible:
+* **geo8 / geodnb:** For creating the original **Ada Unlock Readiness Check** tool (`AdaUnlockCheck`) and diagnostics framework that initiated our hardware porting workflow!
+* **Zagitta & WildFlash1st:** For pioneering the Linux `gpu-unlock` research and `cmp90hx-unlock` rejoining methodologies.
+* **TOTORONG & JustAResearcher:** For early proof-of-concept Windows UEFI implementations.
+* **Igor Wallossek (Igor'sLAB):** For in-depth technical analysis, power verification, and community discussion.
+
