@@ -8,6 +8,16 @@
 #define GU_BOARD_SUBSYSTEM 0x40c31458U
 #define GU_BAR0_BASE 0xfb000000ULL
 #define GU_PCI_BUS 45U
+
+static inline BOOLEAN GuIsAdaDeviceId(UINT16 dev) {
+  return (dev == 0x2684U || dev == 0x2685U ||  /* RTX 4090, 4090D (AD102) */
+          dev == 0x2704U || dev == 0x2703U || dev == 0x2705U); /* RTX 4080, 4080 SUPER, 4070 Ti SUPER (AD103) */
+}
+
+static inline BOOLEAN GuIsAdaPciId(UINT32 id) {
+  if ((id & 0xffffU) != 0x10deU) return FALSE;
+  return GuIsAdaDeviceId((UINT16)(id >> 16));
+}
 /* The default artifact is read-only. Legacy host containment tests are never
    a production enable switch; experimental firmware requires its own define. */
 #if defined(GU_AD104_HOST_TEST) && __STDC_HOSTED__ != 1
@@ -60,6 +70,7 @@ typedef struct {
   EFI_HANDLE image, handle;
   UINT64 bar_base, bar_size, ticks;
   UINT16 pm_cap, pcie_cap, msi_cap, msix_cap;
+  UINT16 device_id;
   UINT32 saved_config[64];
   UINT16 saved_devctl, saved_devctl2;
   UINT8 pcie_version;

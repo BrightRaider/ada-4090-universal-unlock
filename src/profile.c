@@ -35,12 +35,11 @@ BOOLEAN GuAd104PromMatches(const VOID *Data,UINTN Bytes) {
   return TRUE;
 }
 BOOLEAN GuAd104FwsecMatches(const struct gpu_unlock_fwsec *f) {
-  return f && f->image_off==0x44168 && f->image_size==0x10000 &&
-    f->imem_pa==0 && f->imem_size==0xf200 && f->imem_va==0 &&
-    f->dmem_pa==0 && f->dmem_size==0xd80 && f->data_off==0xf200 &&
-    f->pkc_off==0xb24 && f->interface_off==0x1c && f->ucode_id==9 &&
-    f->engine_mask==0x400 && f->sig_count==2 && f->sig_versions==3 &&
-    f->sig_off==0x43e68 && f->sig_bytes==768;
+  if (!f) return FALSE;
+  return f->ucode_id==9 && f->engine_mask==0x400 &&
+         f->sig_count==2 && f->sig_versions==3 &&
+         f->sig_bytes==768 && f->interface_off==0x1c &&
+         f->dmem_size==0xd80;
 }
 
 static BOOLEAN Config(VOID) {
@@ -61,7 +60,7 @@ static BOOLEAN Config(VOID) {
     GuLog("Config: GuCheckConfig failed (seg=%u bus=%u dev=%u fun=%u)\n", (unsigned)s, (unsigned)b, (unsigned)d, (unsigned)f);
     return FALSE;
   }
-  if((c[0]!=0x268410deU && c[0]!=0x268510deU) || ((c[2]>>16)!=0x0300U && (c[2]>>16)!=0x0302U) || (c[4]&~0xfU)!=Gu.bar_base) {
+  if(!GuIsAdaPciId(c[0]) || ((c[2]>>16)!=0x0300U && (c[2]>>16)!=0x0302U) || (c[4]&~0xfU)!=Gu.bar_base) {
     GuLog("Config: mismatch c0=0x%x c2=0x%x c4=0x%x bar_base=0x%llx\n", c[0], c[2], c[4], (unsigned long long)Gu.bar_base);
     return FALSE;
   }

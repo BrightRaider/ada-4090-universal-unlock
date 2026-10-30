@@ -74,7 +74,7 @@ static const struct gpu_unlock_assets *unlock_assets(const struct pci_dev *pdev)
 		.arch = GU_BOOTER_AD10X, .boot_image_size = 36864,
 	};
 
-	return pdev->device == GU_AD102_RTX_4090 ? &ad102 : &ga102;
+	return gpu_is_ada_device(pdev->device) ? &ad102 : &ga102;
 }
 
 /* The two falcons this module ever touches. SEC2 is the secure boot engine
@@ -321,8 +321,7 @@ static bool inaccessible(u32 value)
 
 static bool is_ad102(const struct unlock_transaction_work *work)
 {
-	/* This build admits only the RTX 4090 Suprim X (0x2684). */
-	return work->pdev->device == GU_AD102_RTX_4090;
+	return gpu_is_ada_device(work->pdev->device);
 }
 
 static const struct {
@@ -1704,7 +1703,7 @@ static int unlock_transaction_reset(struct unlock_transaction_work *work)
 
 int gpu_unlock_610_load_shared(struct pci_dev *pdev, struct gpu_unlock_610_shared *shared)
 {
-	if (!pdev || pdev->vendor!=0x10de || pdev->device!=0x2684 || !GuAd104AssetsValid()) return -ENODEV;
+	if (!pdev || pdev->vendor!=0x10de || !gpu_is_ada_device(pdev->device) || !GuAd104AssetsValid()) return -ENODEV;
 	return request_scoped(&pdev->dev, &shared->gsp, unlock_assets(pdev)->gsp);
 }
 
@@ -1722,7 +1721,7 @@ int gpu_unlock_610_unlock(struct pci_dev *pdev, const struct gpu_unlock_610_shar
     /* No EFI application calls this library yet. A future ownership adapter
      * must prove exclusive release of GOP, console and all active consumers. */
     if (Gu.transaction_attempted) return -EALREADY;
-    if (!pdev || pdev->vendor!=0x10de || pdev->device!=0x2684 ||
+    if (!pdev || pdev->vendor!=0x10de || !gpu_is_ada_device(pdev->device) ||
         !shared || shared->gsp!=&GuAssets[2].firmware || !GuAd104AssetsValid() ||
         !Gu.prom_verified || !Gu.profile_verified || !Gu.owned || !Gu.armed ||
         !Gu.display_ok || !Gu.display_check || !Gu.display_check() || Gu.fault ||

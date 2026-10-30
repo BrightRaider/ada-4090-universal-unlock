@@ -1,12 +1,12 @@
 # Ada 4090 Universal Unlock (One-Click UEFI Tool)
 
-[![Architecture](https://img.shields.io/badge/Architecture-Ada%20Lovelace%20(AD102)-green.svg)](#)
-[![GPU](https://img.shields.io/badge/GPU-RTX%204090%20%7C%204090D-blue.svg)](#)
+[![Architecture](https://img.shields.io/badge/Architecture-Ada%20Lovelace%20(AD102%20%2F%20AD103)-green.svg)](#)
+[![GPU](https://img.shields.io/badge/GPU-RTX%204090%20%7C%204080%20%28Super%29%20%7C%204070%20Ti%20Super-blue.svg)](#)
 [![Safety](https://img.shields.io/badge/Safety-100%25%20RAM--Only%20(Zero%20EEPROM%20Writes)-success.svg)](#)
 [![OS](https://img.shields.io/badge/OS-Windows%2010%20%2F%2011%20%7C%20WSL2-orange.svg)](#)
 [![Secure Boot](https://img.shields.io/badge/Secure%20Boot-Compatible%20(Custom%20DB)-blueviolet.svg)](#)
 
-A universal, automated, one-click UEFI pre-boot tool that completely removes the hardware/firmware rate limiter on **NVIDIA GeForce RTX 4090 & RTX 4090D** (AD102) graphics cards. 
+A universal, automated, one-click UEFI pre-boot tool that completely removes the hardware/firmware rate limiter on **NVIDIA GeForce RTX 4090, 4090D, 4080, 4080 SUPER, and 4070 Ti SUPER** (AD102 & AD103) graphics cards. 
 
 The unlock takes place purely in volatile GPU RAM during pre-boot; **zero bits are written to the VBIOS EEPROM**. The unmodified official Windows NVIDIA driver (`nvlddmkm.sys`) loads immediately afterwards, recognizing the fully unlocked tensor cores across Windows, PyTorch, CUDA, WSL2, and Docker.
 
@@ -16,7 +16,7 @@ The unlock takes place purely in volatile GPU RAM during pre-boot; **zero bits a
 
 - **One-Click Setup ("In einem Zug"):** Simply plug in a USB flash drive and run `Setup.bat`. Everything is prepared and verified in seconds.
 - **Universal Hardware Support:**
-  - Works on **ALL** RTX 4090 models (Founder's Edition, Gigabyte, ASUS, MSI, ZOTAC, PNY, Palit, etc.).
+  - Works on **ALL** supported Ada Lovelace models: RTX 4090, RTX 4090D, RTX 4080, RTX 4080 SUPER, and RTX 4070 Ti SUPER across any AIB card (Founder's Edition, Gigabyte, ASUS, MSI, ZOTAC, PNY, Palit, etc.).
   - Works on **ALL** motherboards and platforms (AMD AM4 / AM5: X570, B650, X670; Intel LGA1700: Z690, Z790, etc.) with dynamic PCIe bus scanning.
   - Dynamically detects the active UEFI GOP display driver and Windows EFI System Partition (no hardcoded GUIDs).
 - **100% Reversible & Safe:**

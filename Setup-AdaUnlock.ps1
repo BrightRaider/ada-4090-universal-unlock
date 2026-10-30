@@ -20,13 +20,18 @@ if (-not $isAdmin) {
 
 Clear-Host
 Write-Host "======================================================================" -ForegroundColor Magenta
-Write-Host "     ADA 4090 UNIVERSAL UNLOCK - 1-KLICK PROVISIONER & SETUP          " -ForegroundColor Yellow
+Write-Host "   ADA 4090 / 4080 UNIVERSAL UNLOCK - 1-KLICK PROVISIONER & SETUP     " -ForegroundColor Yellow
 Write-Host "======================================================================" -ForegroundColor Magenta
 Write-Host ""
 
 # 2. Hardware-Erkennung (GPU)
-Write-Host "[1/4] Suche nach kompatibler NVIDIA GeForce RTX 4090..." -ForegroundColor Cyan
-$gpus = Get-CimInstance Win32_VideoController | Where-Object { $_.Name -like "*4090*" -or $_.PNPDeviceID -like "*VEN_10DE&DEV_2684*" -or $_.PNPDeviceID -like "*VEN_10DE&DEV_2685*" }
+Write-Host "[1/4] Suche nach kompatibler NVIDIA GeForce Ada Lovelace GPU..." -ForegroundColor Cyan
+$gpus = Get-CimInstance Win32_VideoController | Where-Object {
+    $_.Name -like "*4090*" -or $_.Name -like "*4080*" -or $_.Name -like "*4070 Ti SUPER*" -or
+    $_.PNPDeviceID -like "*VEN_10DE&DEV_2684*" -or $_.PNPDeviceID -like "*VEN_10DE&DEV_2685*" -or
+    $_.PNPDeviceID -like "*VEN_10DE&DEV_2704*" -or $_.PNPDeviceID -like "*VEN_10DE&DEV_2703*" -or
+    $_.PNPDeviceID -like "*VEN_10DE&DEV_2705*"
+}
 
 if ($gpus) {
     foreach ($gpu in $gpus) {
