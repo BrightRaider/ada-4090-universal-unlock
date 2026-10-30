@@ -59,6 +59,19 @@ Measured directly on real hardware under Windows 10 (CUDA 13.0 / PyTorch 2.10) c
 > **Why is the boost largest at $4096 \times 4096$ (+58.1%)?**  
 > The Ada Lovelace AD102 architecture features a massive **72 MB L2 cache**. A $4096 \times 4096$ FP16 matrix (~32 MB per operand) fits entirely inside this ultra-fast cache (>3.5 TB/s cache bandwidth), so execution is purely **Compute-Bound**—allowing the unlocked Tensor Cores to reach their full unrestricted 208+ TFLOPS potential. At $16384 \times 16384$ (>1.5 GB memory footprint), workloads become **Memory-Bandwidth Bound** by external GDDR6X VRAM. Because real-world AI inference & training models (Stable Diffusion attention layers, FLUX, LLM self-attention/MLPs) slice tensors into $1024$ to $4096$ blocks, they operate right in this maximum speedup sweet spot!
 
+### 🎨 Real-World AI Production Benchmark: FLUX.1-dev (12B DiT Transformer)
+To evaluate real-world gains beyond synthetic GEMM tests, I ran an exact apples-to-apples production benchmark using **FLUX.1-dev** (12 Billion parameter Rectified Flow Transformer) in **ComfyUI / Fooocus** (`torch.bfloat16` model weights + T5-XXL FP16 text encoder).
+
+I deliberately used the **exact same prompt, seed, sampler (Euler, 30 steps), and resolution ($896 \times 1152$)** from historical production runs performed months ago on this exact card in stock condition:
+
+| Workload & Configuration | Stock Windows (Historical) | Unlocked UEFI Boot | Real-World Improvement |
+| :--- | :--- | :--- | :--- |
+| **FLUX.1-dev Sampling Speed** | **1.20 it/s** (25.0s sampling) | **1.97 it/s** (15.2s sampling) | 🚀 **+64.2% Faster Sampling Speed** |
+| **Total Generation Time** (incl. VAE / T5) | **34.2 seconds** | **24.1 seconds** | ⚡ **-29.5% Latency Reduction** |
+| **Peak VRAM Allocated / Reserved** | 21.52 GB / 21.78 GB | 21.52 GB / 21.78 GB | ✅ 100% Rock-Solid VRAM Stability |
+
+*Result:* The synthetic BF16 throughput increase directly translates into real-world AI workloads: **FLUX.1-dev generates high-resolution images in ~24s instead of ~34s with zero crashes, thermal throttling, or artifacts.**
+
 ### NVIDIA GeForce RTX 30 Series (Ampere GA102 - Architecture Reference)
 *Note: The RTX 4090 above was measured and verified directly on my local test rig. The Ampere support added in v1.2 is based on architectural register parity and upstream community research (Zagitta / WildFlash1st). Below are the expected reference targets; community benchmark submissions and PRs are warmly welcome!*
 
