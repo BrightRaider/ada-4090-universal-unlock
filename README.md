@@ -59,14 +59,14 @@ Measured directly on real hardware under Windows 10 (CUDA 13.0 / PyTorch 2.10) c
 > **Why is the boost largest at $4096 \times 4096$ (+58.1%)?**  
 > The Ada Lovelace AD102 architecture features a massive **72 MB L2 cache**. A $4096 \times 4096$ FP16 matrix (~32 MB per operand) fits entirely inside this ultra-fast cache (>3.5 TB/s cache bandwidth), so execution is purely **Compute-Bound**—allowing the unlocked Tensor Cores to reach their full unrestricted 208+ TFLOPS potential. At $16384 \times 16384$ (>1.5 GB memory footprint), workloads become **Memory-Bandwidth Bound** by external GDDR6X VRAM. Because real-world AI inference & training models (Stable Diffusion attention layers, FLUX, LLM self-attention/MLPs) slice tensors into $1024$ to $4096$ blocks, they operate right in this maximum speedup sweet spot!
 
-### NVIDIA GeForce RTX 3090 (Ampere GA102)
-Measured on real hardware under Windows:
+### NVIDIA GeForce RTX 30 Series (Ampere GA102 - Architecture Reference)
+*Note: The RTX 4090 above was measured and verified directly on my local test rig. The Ampere support added in v1.2 is based on architectural register parity and upstream community research (Zagitta / WildFlash1st). Below are the expected reference targets; community benchmark submissions and PRs are warmly welcome!*
 
-| Compute Mode | Stock Throughput | Unlocked Throughput | Performance Delta |
-| :--- | :--- | :--- | :--- |
-| **FP16 Tensor (FP32 Accum)** | **69.31 TFLOPS** | **130.44 TFLOPS** | 🚀 **+88.2% Boost** |
-| **BF16 Tensor** | Rate Limited | **130+ TFLOPS** | 🔥 Full Compute |
-| **FP32 CUDA Baseline** | 27.51 TFLOPS | 27.76 TFLOPS | ✅ Parity Preserved |
+| Compute Mode | Stock Baseline | Expected Unlocked | Projected Boost | Status |
+| :--- | :--- | :--- | :--- | :--- |
+| **FP16 Tensor (FP32 Accum)** | ~69.3 TFLOPS | **~130.4 TFLOPS** | 🚀 **+88.2%** | Supported in v1.2 (Community benchmarks welcome!) |
+| **BF16 Tensor** | Rate Limited | **~130+ TFLOPS** | 🔥 Full Compute | Supported in v1.2 |
+| **FP32 CUDA Baseline** | ~27.5 TFLOPS | ~27.5 TFLOPS | ✅ Stock Parity | Supported in v1.2 |
 
 ---
 
