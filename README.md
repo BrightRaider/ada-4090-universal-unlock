@@ -118,7 +118,7 @@ ightarrow$ **Key Management** (or *Custom Key Management*).
 ## 🙏 Acknowledgements & Credits
 
 Special thanks to the community pioneers who made this possible:
-* **geo8 / geodnb:** For creating the original **Ada Unlock Readiness Check** tool (`AdaUnlockCheck`) and diagnostics framework that initiated our hardware porting workflow!
+* **geo8 / geodnb:** For creating the original **Ada Unlock Readiness Check** tool (`AdaUnlockCheck`) and diagnostics framework that initiated this hardware porting project!
 * **Zagitta & WildFlash1st:** For pioneering the Linux `gpu-unlock` research and `cmp90hx-unlock` rejoining methodologies.
 * **TOTORONG & JustAResearcher:** For early proof-of-concept Windows UEFI implementations.
 * **Igor Wallossek (Igor'sLAB):** For in-depth technical analysis, power verification, and community discussion.
