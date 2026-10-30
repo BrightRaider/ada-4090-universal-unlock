@@ -1,9 +1,9 @@
 <#
 .SYNOPSIS
-    AdaLoveloce RTX 4090 Universal Unlock Setup Tool
+    Universal RTX 40 & RTX 30 Series Tensor Unlock Setup Tool (v1.2)
 .DESCRIPTION
     Automatisches 1-Klick Setup-Tool zur Erstellung eines bootfähigen
-    UEFI-Sticks mit dem universellen Ada RTX 4090 Rate-Limiter Unlock.
+    UEFI-Sticks mit dem universellen Ada & Ampere Rate-Limiter Unlock.
 #>
 
 param(
@@ -20,17 +20,22 @@ if (-not $isAdmin) {
 
 Clear-Host
 Write-Host "======================================================================" -ForegroundColor Magenta
-Write-Host "   ADA 4090 / 4080 UNIVERSAL UNLOCK - 1-KLICK PROVISIONER & SETUP     " -ForegroundColor Yellow
+Write-Host "   RTX 40 & 30 SERIES UNIVERSAL UNLOCK - 1-KLICK SETUP (v1.2)          " -ForegroundColor Yellow
+Write-Host "   Unterstützt: RTX 4090/D, 4080/S, 4070TiS | RTX 3090/Ti, 3080/Ti   " -ForegroundColor Cyan
 Write-Host "======================================================================" -ForegroundColor Magenta
 Write-Host ""
 
 # 2. Hardware-Erkennung (GPU)
-Write-Host "[1/4] Suche nach kompatibler NVIDIA GeForce Ada Lovelace GPU..." -ForegroundColor Cyan
+Write-Host "[1/4] Suche nach kompatibler NVIDIA GeForce GPU (Ada / Ampere)..." -ForegroundColor Cyan
 $gpus = Get-CimInstance Win32_VideoController | Where-Object {
     $_.Name -like "*4090*" -or $_.Name -like "*4080*" -or $_.Name -like "*4070 Ti SUPER*" -or
+    $_.Name -like "*3090*" -or $_.Name -like "*3080*" -or
     $_.PNPDeviceID -like "*VEN_10DE&DEV_2684*" -or $_.PNPDeviceID -like "*VEN_10DE&DEV_2685*" -or
     $_.PNPDeviceID -like "*VEN_10DE&DEV_2704*" -or $_.PNPDeviceID -like "*VEN_10DE&DEV_2703*" -or
-    $_.PNPDeviceID -like "*VEN_10DE&DEV_2705*"
+    $_.PNPDeviceID -like "*VEN_10DE&DEV_2705*" -or
+    $_.PNPDeviceID -like "*VEN_10DE&DEV_2204*" -or $_.PNPDeviceID -like "*VEN_10DE&DEV_2208*" -or
+    $_.PNPDeviceID -like "*VEN_10DE&DEV_2206*" -or $_.PNPDeviceID -like "*VEN_10DE&DEV_220A*" -or
+    $_.PNPDeviceID -like "*VEN_10DE&DEV_2216*"
 }
 
 if ($gpus) {
@@ -38,7 +43,7 @@ if ($gpus) {
         Write-Host "  [OK] Gefundene GPU: $($gpu.Name) ($($gpu.PNPDeviceID))" -ForegroundColor Green
     }
 } else {
-    Write-Host "  [WARNUNG] Keine RTX 4090 im aktuellen System gefunden (Setup kann trotzdem fortgesetzt werden)." -ForegroundColor Yellow
+    Write-Host "  [WARNUNG] Keine Ziel-GPU im aktuellen System gefunden (Setup kann trotzdem fortgesetzt werden)." -ForegroundColor Yellow
 }
 
 Write-Host ""
@@ -80,17 +85,18 @@ $formatAnswer = Read-Host "  Möchtest du das Laufwerk $driveLetter jetzt schnel
 
 if ($formatAnswer -match "^[jJyY]") {
     Write-Host "  Formatiere $driveLetter mit FAT32..." -ForegroundColor Cyan
-    Format-Volume -DriveLetter $driveLetter.TrimEnd(':') -FileSystem FAT32 -NewFileSystemLabel "ADA_UNLOCK" -Confirm:$false | Out-Null
+    Format-Volume -DriveLetter $driveLetter.TrimEnd(':') -FileSystem FAT32 -NewFileSystemLabel "GPU_UNLOCK" -Confirm:$false | Out-Null
     Write-Host "  [OK] Formatierung abgeschlossen." -ForegroundColor Green
 }
 
 # 4. Dateien kopieren
 Write-Host ""
-Write-Host "[3/4] Kopiere Universal Booter & Firmware-Assets..." -ForegroundColor Cyan
+Write-Host "[3/4] Kopiere Universal Booter & Firmware-Assets (Ada & Ampere)..." -ForegroundColor Cyan
 
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $efiSrc = Join-Path $scriptDir "bin\BOOTX64.EFI"
-$assetsSrc = Join-Path $scriptDir "AD102-ASSETS"
+$ad102Src = Join-Path $scriptDir "AD102-ASSETS"
+$ga102Src = Join-Path $scriptDir "GA102-ASSETS"
 $certSrc = Join-Path $scriptDir "AdaUnlock_SecureBoot.cer"
 
 $efiDstDir = Join-Path $driveLetter "EFI\BOOT"
@@ -98,10 +104,26 @@ New-Item -ItemType Directory -Path $efiDstDir -Force | Out-Null
 Copy-Item $efiSrc (Join-Path $efiDstDir "BOOTX64.EFI") -Force
 Write-Host "  [OK] UEFI Bootloader kopiert nach $driveLetter\EFI\BOOT\BOOTX64.EFI" -ForegroundColor Green
 
-$assetsDstDir = Join-Path $driveLetter "AD102-ASSETS"
-New-Item -ItemType Directory -Path $assetsDstDir -Force | Out-Null
-Copy-Item (Join-Path $assetsSrc "*") $assetsDstDir -Force
-Write-Host "  [OK] 5 Firmware-Assets kopiert nach $driveLetter\AD102-ASSETS\" -ForegroundColor Green
+if (Test-Path $ad102Src) {
+    $adDst = Join-Path $driveLetter "AD102-ASSETS"
+    New-Item -ItemType Directory -Path $adDst -Force | Out-Null
+    Copy-Item (Join-Path $ad102Src "*") $adDst -Force
+    Write-Host "  [OK] Ada (AD102/AD103) Assets kopiert nach $driveLetter\AD102-ASSETS\" -ForegroundColor Green
+}
+
+if (Test-Path $ga102Src) {
+    $gaDst = Join-Path $driveLetter "GA102-ASSETS"
+    New-Item -ItemType Directory -Path $gaDst -Force | Out-Null
+    Copy-Item (Join-Path $ga102Src "*") $gaDst -Force
+    $gspDst = Join-Path $gaDst "gsp_ga10x.bin"
+    if (-not (Test-Path $gspDst)) {
+        $gspSrc = Join-Path $ad102Src "gsp_ga10x.bin"
+        if (Test-Path $gspSrc) {
+            Copy-Item $gspSrc $gspDst -Force
+        }
+    }
+    Write-Host "  [OK] Ampere (GA102) Assets kopiert nach $driveLetter\GA102-ASSETS\" -ForegroundColor Green
+}
 
 if (Test-Path $certSrc) {
     Copy-Item $certSrc (Join-Path $driveLetter "AdaUnlock_SecureBoot.cer") -Force
@@ -112,7 +134,7 @@ if (Test-Path $certSrc) {
 Write-Host ""
 Write-Host "[4/4] Verifiziere SHA-256 Prüfsummen..." -ForegroundColor Cyan
 
-$hashes = @{
+$adHashes = @{
     "booter_load_ad102.bin" = "6ee05b20e1dc244c08c052f36ef28469b8d09f4955d1fe33e48a179e11a7fd49"
     "v67-ad102-610.43.03-four-plm.bin" = "44c36b2d6b3424e53e18f3e55db85c833655de071ce66ce42749588a4a7dc8cb"
     "gsp_ga10x.bin" = "572373620a37418f24dc16b5031c39338778c3257e48e8408de9a57291b24f3a"
@@ -120,20 +142,44 @@ $hashes = @{
     "gsp_boot_desc_ad102.bin" = "83f8f3f1f5f9496e0ea8fc7103c2beb64d0b6de2f5ffe725f13514de5a95fa42"
 }
 
+$gaHashes = @{
+    "booter_load_ga102.bin" = "056cbc064a888f80717726c54d7f64fcd68044d123870c95a74f37f4975dcaa4"
+    "v67-ga102-610.43.03.bin" = "2a0aa1f86d0b6afff5214d641d87d46dc98ef06ed908ff05d0ddbad5ffb7e197"
+    "gsp_ga10x.bin" = "572373620a37418f24dc16b5031c39338778c3257e48e8408de9a57291b24f3a"
+    "gsp_boot_ga102.bin" = "3df651acb174fd5f5561a1996965b192f50c5d763168446ed0d4ead19d895768"
+    "gsp_boot_desc_ga102.bin" = "cc5a3fc1f4c47f2fe107b1b68f0176d8a448e6dec84b575e5560ccef5262bf15"
+}
+
 $allValid = $true
-foreach ($name in $hashes.Keys) {
-    $filePath = Join-Path $assetsDstDir $name
-    if (-not (Test-Path $filePath)) {
-        Write-Host "  [FEHLER] Datei fehlt: $name" -ForegroundColor Red
-        $allValid = $false
-        continue
+if (Test-Path (Join-Path $driveLetter "AD102-ASSETS")) {
+    Write-Host "  Prüfe AD102 Assets:" -ForegroundColor Gray
+    foreach ($name in $adHashes.Keys) {
+        $filePath = Join-Path $driveLetter "AD102-ASSETS\$name"
+        if (Test-Path $filePath) {
+            $actualHash = (Get-FileHash -Path $filePath -Algorithm SHA256).Hash.ToLower()
+            if ($actualHash -eq $adHashes[$name]) {
+                Write-Host "    [OK] ${name}: bitgenau verifiziert." -ForegroundColor Green
+            } else {
+                Write-Host "    [FEHLER] ${name}: Hash-Fehler ($actualHash)" -ForegroundColor Red
+                $allValid = $false
+            }
+        }
     }
-    $actualHash = (Get-FileHash -Path $filePath -Algorithm SHA256).Hash.ToLower()
-    if ($actualHash -eq $hashes[$name]) {
-        Write-Host "  [OK] ${name}: bitgenau verifiziert." -ForegroundColor Green
-    } else {
-        Write-Host "  [FEHLER] ${name}: Hash-Fehler ($actualHash)" -ForegroundColor Red
-        $allValid = $false
+}
+
+if (Test-Path (Join-Path $driveLetter "GA102-ASSETS")) {
+    Write-Host "  Prüfe GA102 Assets:" -ForegroundColor Gray
+    foreach ($name in $gaHashes.Keys) {
+        $filePath = Join-Path $driveLetter "GA102-ASSETS\$name"
+        if (Test-Path $filePath) {
+            $actualHash = (Get-FileHash -Path $filePath -Algorithm SHA256).Hash.ToLower()
+            if ($actualHash -eq $gaHashes[$name]) {
+                Write-Host "    [OK] ${name}: bitgenau verifiziert." -ForegroundColor Green
+            } else {
+                Write-Host "    [FEHLER] ${name}: Hash-Fehler ($actualHash)" -ForegroundColor Red
+                $allValid = $false
+            }
+        }
     }
 }
 

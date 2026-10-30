@@ -14,9 +14,32 @@ static inline BOOLEAN GuIsAdaDeviceId(UINT16 dev) {
           dev == 0x2704U || dev == 0x2703U || dev == 0x2705U); /* RTX 4080, 4080 SUPER, 4070 Ti SUPER (AD103) */
 }
 
+static inline BOOLEAN GuIsAmpereDeviceId(UINT16 dev) {
+  return (dev == 0x2204U ||  /* RTX 3090 */
+          dev == 0x2208U ||  /* RTX 3090 Ti */
+          dev == 0x2206U ||  /* RTX 3080 Ti */
+          dev == 0x220aU ||  /* RTX 3080 10GB */
+          dev == 0x2216U ||  /* RTX 3080 12GB */
+          dev == 0x2207U);   /* CMP 90HX */
+}
+
+static inline BOOLEAN GuIsSupportedDeviceId(UINT16 dev) {
+  return GuIsAdaDeviceId(dev) || GuIsAmpereDeviceId(dev);
+}
+
 static inline BOOLEAN GuIsAdaPciId(UINT32 id) {
   if ((id & 0xffffU) != 0x10deU) return FALSE;
   return GuIsAdaDeviceId((UINT16)(id >> 16));
+}
+
+static inline BOOLEAN GuIsAmperePciId(UINT32 id) {
+  if ((id & 0xffffU) != 0x10deU) return FALSE;
+  return GuIsAmpereDeviceId((UINT16)(id >> 16));
+}
+
+static inline BOOLEAN GuIsSupportedPciId(UINT32 id) {
+  if ((id & 0xffffU) != 0x10deU) return FALSE;
+  return GuIsSupportedDeviceId((UINT16)(id >> 16));
 }
 /* The default artifact is read-only. Legacy host containment tests are never
    a production enable switch; experimental firmware requires its own define. */
@@ -74,6 +97,7 @@ typedef struct {
   UINT32 saved_config[64];
   UINT16 saved_devctl, saved_devctl2;
   UINT8 pcie_version;
+  BOOLEAN is_ampere;
   BOOLEAN fault, retained, started, quiesced, armed, owned, display_ok, saved;
   BOOLEAN profile_verified, prom_verified;
   BOOLEAN transaction_attempted;

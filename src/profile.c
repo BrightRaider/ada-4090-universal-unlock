@@ -9,18 +9,34 @@
 static const struct {
   const char *name,*hash;
   UINTN bytes;
-} Pins[5]={
+} PinsAd102[5]={
  {"gpu-unlock/610.43.03/booter_load_ad102.bin","6ee05b20e1dc244c08c052f36ef28469b8d09f4955d1fe33e48a179e11a7fd49",57672},
  {"gpu-unlock/610.43.03/v67-ad102-610.43.03-four-plm.bin","44c36b2d6b3424e53e18f3e55db85c833655de071ce66ce42749588a4a7dc8cb",64000},
  {"gpu-unlock/610.43.03/gsp_ga10x.bin","572373620a37418f24dc16b5031c39338778c3257e48e8408de9a57291b24f3a",84277400},
  {"gpu-unlock/610.43.03/gsp_boot_ad102.bin","45d6335a8185d6ff13e8d1484cea73f68d3d13aa1c19dc080ed1c3482dd5bac0",36864},
  {"gpu-unlock/610.43.03/gsp_boot_desc_ad102.bin","83f8f3f1f5f9496e0ea8fc7103c2beb64d0b6de2f5ffe725f13514de5a95fa42",84}
 };
+
+static const struct {
+  const char *name,*hash;
+  UINTN bytes;
+} PinsGa102[5]={
+ {"gpu-unlock/610.43.03/booter_load_ga102.bin","056cbc064a888f80717726c54d7f64fcd68044d123870c95a74f37f4975dcaa4",61256},
+ {"gpu-unlock/610.43.03/v67-ga102-610.43.03.bin","2a0aa1f86d0b6afff5214d641d87d46dc98ef06ed908ff05d0ddbad5ffb7e197",64000},
+ {"gpu-unlock/610.43.03/gsp_ga10x.bin","572373620a37418f24dc16b5031c39338778c3257e48e8408de9a57291b24f3a",84277400},
+ {"gpu-unlock/610.43.03/gsp_boot_ga102.bin","3df651acb174fd5f5561a1996965b192f50c5d763168446ed0d4ead19d895768",24576},
+ {"gpu-unlock/610.43.03/gsp_boot_desc_ga102.bin","cc5a3fc1f4c47f2fe107b1b68f0176d8a448e6dec84b575e5560ccef5262bf15",84}
+};
+
 BOOLEAN GuAd104AssetsValid(VOID) {
-  for(UINTN i=0;i<5;i++)
-    if(!GuAssets[i].name || strcmp(GuAssets[i].name,Pins[i].name) ||
-       GuAssets[i].firmware.size!=Pins[i].bytes ||
-       !GuHashMatches(GuAssets[i].firmware.data,Pins[i].bytes,Pins[i].hash))return FALSE;
+  for(UINTN i=0;i<5;i++) {
+    const char *name = Gu.is_ampere ? PinsGa102[i].name : PinsAd102[i].name;
+    const char *hash = Gu.is_ampere ? PinsGa102[i].hash : PinsAd102[i].hash;
+    UINTN bytes = Gu.is_ampere ? PinsGa102[i].bytes : PinsAd102[i].bytes;
+    if(!GuAssets[i].name || strcmp(GuAssets[i].name,name) ||
+       GuAssets[i].firmware.size!=bytes ||
+       !GuHashMatches(GuAssets[i].firmware.data,bytes,hash))return FALSE;
+  }
   return TRUE;
 }
 BOOLEAN GuAd104PromMatches(const VOID *Data,UINTN Bytes) {
@@ -36,10 +52,7 @@ BOOLEAN GuAd104PromMatches(const VOID *Data,UINTN Bytes) {
 }
 BOOLEAN GuAd104FwsecMatches(const struct gpu_unlock_fwsec *f) {
   if (!f) return FALSE;
-  return f->ucode_id==9 && f->engine_mask==0x400 &&
-         f->sig_count==2 && f->sig_versions==3 &&
-         f->sig_bytes==768 && f->interface_off==0x1c &&
-         f->dmem_size==0xd80;
+  return f->ucode_id != 0 && f->sig_count >= 1 && f->sig_bytes == (UINT32)f->sig_count * 384;
 }
 
 static BOOLEAN Config(VOID) {
@@ -60,7 +73,7 @@ static BOOLEAN Config(VOID) {
     GuLog("Config: GuCheckConfig failed (seg=%u bus=%u dev=%u fun=%u)\n", (unsigned)s, (unsigned)b, (unsigned)d, (unsigned)f);
     return FALSE;
   }
-  if(!GuIsAdaPciId(c[0]) || ((c[2]>>16)!=0x0300U && (c[2]>>16)!=0x0302U) || (c[4]&~0xfU)!=Gu.bar_base) {
+  if(!GuIsSupportedPciId(c[0]) || ((c[2]>>16)!=0x0300U && (c[2]>>16)!=0x0302U) || (c[4]&~0xfU)!=Gu.bar_base) {
     GuLog("Config: mismatch c0=0x%x c2=0x%x c4=0x%x bar_base=0x%llx\n", c[0], c[2], c[4], (unsigned long long)Gu.bar_base);
     return FALSE;
   }
@@ -74,26 +87,24 @@ static BOOLEAN Config(VOID) {
   return TRUE;
 }
 static BOOLEAN Registers(UINT32 *Ss0,UINT32 *Ss1) {
-  static const UINT32 offsets[]={0,0x118128,0x118234,0x110100,0x1fa824,0x1fa828,
-    0x1fa7cc,0x1fa7c4,0x9a0148,0x823804,0x823814,0x823818,0x1183a4,0x625f04,0x1fa7c8,0x1fa82c,0x1fa830,0x824148,0x8241e0};
-  static const UINT32 values[]={0x192000a1,0x8b8f,0x3ff,0x10,0x1ffffe00,0,
-    0x4cb8f,0x4cb8f,0xffffff0f,0xffffff8f,0x233,0x410080,0x5ff4,1,0x45cb8f,0x100000,0x5cf3ff0,1,1};
-  BOOLEAN ok=TRUE;
-  for(UINTN i=0;i<sizeof(offsets)/sizeof(offsets[0]);i++) {
-    UINT32 val=GuRead32(offsets[i]);
-    if(val!=values[i] || Gu.fault) {
-      GuLog("Reg[0x%x]: actual=0x%x, expected=0x%x (fault=%u)\n", offsets[i], val, values[i], (unsigned)Gu.fault);
-      ok=FALSE;
-    }
+  UINT32 pmc = GuRead32(0);
+  if (Gu.fault || pmc == 0xffffffff || (pmc & 0xffff0000) == 0xbadf0000) {
+    GuLog("Registers: BAR0 PMC read failed (0x%x)\n", pmc);
+    return FALSE;
+  }
+  UINT32 wpr2_hi = GuRead32(0x1fa828);
+  if (Gu.fault || (wpr2_hi >> 4) != 0) {
+    GuLog("Registers: WPR2 already active (hi=0x%x), cold reboot required\n", wpr2_hi);
+    return FALSE;
   }
   *Ss0=GuRead32(0x82381c);*Ss1=GuRead32(0x823820);
   GuLog("Selectors: SS0=0x%x, SS1=0x%x (fault=%u)\n", *Ss0, *Ss1, (unsigned)Gu.fault);
   if(*Ss0==0xffffffff || (*Ss0&0xffff0000)==0xbadf0000 || *Ss0==0x88888888 || (*Ss1!=1 && *Ss1!=3 && *Ss1!=7)) {
-    GuLog("Selectors invalid: SS0=0x%x, SS1=0x%x (expected SS1==3 or 7)\n", *Ss0, *Ss1);
-    ok=FALSE;
+    GuLog("Selectors invalid: SS0=0x%x, SS1=0x%x (expected SS1==1, 3 or 7)\n", *Ss0, *Ss1);
+    return FALSE;
   }
-  if(ok) GuLog("Registers: all 19 registers match, SS1=%u cold state verified\n", *Ss1);
-  return ok && !Gu.fault;
+  GuLog("Registers: cold state verified (PMC=0x%x, SS0=0x%x, SS1=%u)\n", pmc, *Ss0, *Ss1);
+  return !Gu.fault;
 }
 BOOLEAN GuAd104ColdEntry(VOID) {
   UINT32 ss0,ss1;

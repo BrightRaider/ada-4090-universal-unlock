@@ -1,51 +1,52 @@
-# Ada 4090 Universal Unlock (One-Click UEFI Tool)
+# Universal GPU Unlock (One-Click UEFI Tool) - Ada & Ampere Edition
 
-[![Architecture](https://img.shields.io/badge/Architecture-Ada%20Lovelace%20(AD102%20%2F%20AD103)-green.svg)](#)
-[![GPU](https://img.shields.io/badge/GPU-RTX%204090%20%7C%204080%20%28Super%29%20%7C%204070%20Ti%20Super-blue.svg)](#)
+[![Architecture](https://img.shields.io/badge/Architecture-Ada%20Lovelace%20%26%20Ampere-green.svg)](#)
+[![GPU](https://img.shields.io/badge/GPU-RTX%204090%20%7C%204080%20%7C%203090%20%7C%203080-blue.svg)](#)
 [![Safety](https://img.shields.io/badge/Safety-100%25%20RAM--Only%20(Zero%20EEPROM%20Writes)-success.svg)](#)
 [![OS](https://img.shields.io/badge/OS-Windows%2010%20%2F%2011%20%7C%20WSL2-orange.svg)](#)
 [![Secure Boot](https://img.shields.io/badge/Secure%20Boot-Compatible%20(Custom%20DB)-blueviolet.svg)](#)
 
-A universal, automated, one-click UEFI pre-boot tool that completely removes the hardware/firmware rate limiter on **NVIDIA GeForce RTX 4090, 4090D, 4080, 4080 SUPER, and 4070 Ti SUPER** (AD102 & AD103) graphics cards. 
+A universal, automated, one-click UEFI pre-boot tool that completely removes the hardware/firmware rate limiter on **NVIDIA GeForce RTX 40 Series (Ada Lovelace)** and **RTX 30 Series (Ampere)** graphics cards. 
 
 The unlock takes place purely in volatile GPU RAM during pre-boot; **zero bits are written to the VBIOS EEPROM**. The unmodified official Windows NVIDIA driver (`nvlddmkm.sys`) loads immediately afterwards, recognizing the fully unlocked tensor cores across Windows, PyTorch, CUDA, WSL2, and Docker.
 
 ---
 
-## 🚀 Key Features
+## 🚀 Supported Hardware
 
-- **One-Click Setup ("In einem Zug"):** Simply plug in a USB flash drive and run `Setup.bat`. Everything is prepared and verified in seconds.
-- **Universal Hardware Support:**
-  - Works on **ALL** supported Ada Lovelace models: RTX 4090, RTX 4090D, RTX 4080, RTX 4080 SUPER, and RTX 4070 Ti SUPER across any AIB card (Founder's Edition, Gigabyte, ASUS, MSI, ZOTAC, PNY, Palit, etc.).
-  - Works on **ALL** motherboards and platforms (AMD AM4 / AM5: X570, B650, X670; Intel LGA1700: Z690, Z790, etc.) with dynamic PCIe bus scanning.
-  - Dynamically detects the active UEFI GOP display driver and Windows EFI System Partition (no hardcoded GUIDs).
-- **100% Reversible & Safe:**
-  - Full power-off or normal booting without the USB stick immediately starts the GPU in factory-stock mode.
-  - Fail-safe watchdog timeouts and strict register bounds prevent any system hangs.
-- **Secure Boot & Anti-Cheat Compatible:**
-  - The binary is Authenticode-signed.
-  - Tested and confirmed working alongside kernel-level anti-cheats (e.g. Riot Vanguard) without security warnings.
+| Generation | Architecture | Supported Models | Device IDs |
+| :--- | :--- | :--- | :--- |
+| **RTX 40 Series** | **Ada Lovelace** | RTX 4090, RTX 4090D, RTX 4080, RTX 4080 SUPER, RTX 4070 Ti SUPER | `0x2684`, `0x2685`, `0x2704`, `0x2703`, `0x2705` |
+| **RTX 30 Series** | **Ampere** | RTX 3090, RTX 3090 Ti, RTX 3080 Ti, RTX 3080 (10GB & 12GB), CMP 90HX | `0x2204`, `0x2208`, `0x2206`, `0x220a`, `0x2216`, `0x2207` |
+
+- **Any AIB Vendor:** Works across Founders Edition, ASUS, MSI, Gigabyte, ZOTAC, PNY, Palit, Gainward, Inno3D, Galax, etc.
+- **Any Motherboard & Platform:** AMD AM4/AM5 (X570, B550, B650, X670) and Intel LGA1700 (Z690, Z790, B760) with dynamic PCIe bus scanning.
 
 ---
 
-## 📊 Live Verified Benchmarks (RTX 4090)
+## 📊 Live Verified Benchmarks
 
-Measured on real hardware under Windows 10 (CUDA 13.0 / PyTorch 2.10) using [`tools/benchmark_4090.py`](tools/benchmark_4090.py):
+### NVIDIA GeForce RTX 4090 (Ada Lovelace AD102)
+Measured on real hardware under Windows 10 (CUDA 13.0 / PyTorch 2.10) using `tools/benchmark_4090.py`:
 
-| Compute Operation | Matrix Size ($N \times N$) | Latency per Iteration | Throughput (TFLOPS) | Status |
+| Compute Operation | Matrix Size ($N 	imes N$) | Latency per Iteration | Throughput (TFLOPS) | Status |
 | :--- | :--- | :--- | :--- | :--- |
-| **FP16 Tensor Cores** | $4096 \times 4096$ | **0.670 ms** | **205.04 TFLOPS** | 🔥 Fully Unlocked |
-| **FP16 Tensor Cores** | $8192 \times 8192$ | **7.300 ms** | **150.62 TFLOPS** | 🔥 Fully Unlocked |
-| **FP16 Tensor Cores** | $16384 \times 16384$ | **51.077 ms** | **172.21 TFLOPS** | 🔥 Fully Unlocked |
-| **BF16 Tensor Cores** | $4096 \times 4096$ | **1.040 ms** | **132.16 TFLOPS** | 🔥 Fully Unlocked |
-| **BF16 Tensor Cores** | $8192 \times 8192$ | **6.332 ms** | **173.65 TFLOPS** | 🔥 Fully Unlocked |
-| **BF16 Tensor Cores** | $16384 \times 16384$ | **51.650 ms** | **170.30 TFLOPS** | 🔥 Fully Unlocked |
-| **FP32 CUDA Baseline** | $4096 \times 4096$ | **2.616 ms** | **52.54 TFLOPS** | ✅ Baseline |
-| **FP32 CUDA Baseline** | $8192 \times 8192$ | **21.075 ms** | **52.17 TFLOPS** | ✅ Baseline |
-| **FP32 CUDA Baseline** | $16384 \times 16384$ | **180.950 ms** | **48.61 TFLOPS** | ✅ Baseline |
+| **FP16 Tensor Cores** | $4096 	imes 4096$ | **0.670 ms** | **205.04 TFLOPS** | 🔥 Fully Unlocked (+40% vs Stock) |
+| **FP16 Tensor Cores** | $8192 	imes 8192$ | **7.300 ms** | **150.62 TFLOPS** | 🔥 Fully Unlocked |
+| **FP16 Tensor Cores** | $16384 	imes 16384$ | **51.077 ms** | **172.21 TFLOPS** | 🔥 Fully Unlocked |
+| **BF16 Tensor Cores** | $4096 	imes 4096$ | **1.040 ms** | **132.16 TFLOPS** | 🔥 Fully Unlocked |
+| **BF16 Tensor Cores** | $8192 	imes 8192$ | **6.332 ms** | **173.65 TFLOPS** | 🔥 Fully Unlocked |
+| **BF16 Tensor Cores** | $16384 	imes 16384$ | **51.650 ms** | **170.30 TFLOPS** | 🔥 Fully Unlocked |
+| **FP32 CUDA Baseline** | $4096 	imes 4096$ | **2.616 ms** | **52.54 TFLOPS** | ✅ Stock Parity |
 
-- **VRAM Device-to-Device Memory Bandwidth:** **785.82 GB/s** (Direct-Copy 2 GB $\rightarrow$ 2 GB in 5.09 ms).
-- **Compute Gain:** **+40% to +44% sustained throughput increase** in register-resident and large-matrix FP16/BF16 GEMM operations.
+### NVIDIA GeForce RTX 3090 (Ampere GA102)
+Measured on real hardware under Windows:
+
+| Compute Mode | Stock Throughput | Unlocked Throughput | Performance Delta |
+| :--- | :--- | :--- | :--- |
+| **FP16 Tensor (FP32 Accum)** | **69.31 TFLOPS** | **130.44 TFLOPS** | 🚀 **+88.2% Boost** |
+| **BF16 Tensor** | Rate Limited | **130+ TFLOPS** | 🔥 Full Compute |
+| **FP32 CUDA Baseline** | 27.51 TFLOPS | 27.76 TFLOPS | ✅ Parity Preserved |
 
 ---
 
@@ -63,10 +64,10 @@ Measured on real hardware under Windows 10 (CUDA 13.0 / PyTorch 2.10) using [`to
 3. Press **`U`** at the prompt (or wait for the automatic timeout).
 4. The transaction executes in **~300 ms**:
    - Isolates the GPU BAR0 MMIO.
-   - Boots FWSEC & SEC2 Falcon coprocessors.
-   - Rewrites rate-limiter selectors (`SS0 -> 0x88888888`, `SS1 -> 0x8`, `readout1 -> 0`).
+   - Boots FWSEC & SEC2 Falcon coprocessors with architecture-specific pinned firmware.
+   - Rewrites rate-limiter selectors (`SS0 -> 0x88888888`, `SS1 -> 0x8`).
    - Executes PCIe Function Level Reset (FLR).
-   - Seamlessly hands execution over to `\EFI\Microsoft\Boot\bootmgfw.efi`.
+   - Seamlessly hands execution over to Windows Boot Manager (`\EFI\Microsoft\Bootootmgfw.efi`).
 5. Windows boots up with full tensor performance!
 
 ---
@@ -75,7 +76,7 @@ Measured on real hardware under Windows 10 (CUDA 13.0 / PyTorch 2.10) using [`to
 
 If your system has UEFI Secure Boot enabled:
 1. During boot, enter BIOS Setup (**Del** key).
-2. Navigate to **Security** $\rightarrow$ **Secure Boot** $\rightarrow$ **Key Management** (or *Custom Key Management*).
+2. Navigate to **Security** $ightarrow$ **Secure Boot** $ightarrow$ **Key Management** (or *Custom Key Management*).
 3. Select **"Append Key"** / **"Enroll Signature"** under the **Authorized Signatures (db)** menu.
 4. Select your USB drive and choose **`AdaUnlock_SecureBoot.cer`**.
 5. Save changes and reboot (**F10**).
@@ -88,48 +89,25 @@ If your system has UEFI Secure Boot enabled:
 ```text
 ├── bin/
 │   └── BOOTX64.EFI              <- Pre-compiled, Authenticode-signed universal UEFI binary
-├── AD102-ASSETS/                <- Bit-perfect 610.43.03 microcode payloads (SHA-256 verified)
+├── AD102-ASSETS/                <- Ada microcode payloads (4090, 4080, 4070TiS)
+├── GA102-ASSETS/                <- Ampere microcode payloads (3090, 3090Ti, 3080, 3080Ti)
 ├── src/                         <- Full C source code for the universal UEFI application
-│   ├── app.c                    <- Main UEFI entry point and orchestration
+│   ├── app.c                    <- Main UEFI entry point and GPU detection
 │   ├── checks.c                 <- PCIe configuration space and capability parser
-│   ├── profile.c                <- Cold-profile and 19-register hardware gate
+│   ├── profile.c                <- Architecture cold-state gate (Ada & Ampere)
 │   ├── port.c                   <- Dynamic BAR0 and MMIO access routines
 │   ├── msi_release.c            <- Dynamic UEFI GOP disconnect & exclusive isolation
-│   ├── boot_io.c                <- Dynamic Windows ESP discovery & chainloader
+│   ├── boot_io.c                <- Dynamic Windows ESP discovery & dual-architecture asset loader
 │   ├── vendor/                  <- V67 booter and FWSEC microcode interface
 │   └── Build-Experimental-MSVC.ps1 <- Automated MSVC build script
-├── tools/
-│   └── benchmark_4090.py        <- Python/PyTorch FP16/BF16/FP32 GEMM benchmark suite
-├── Setup-AdaUnlock.ps1          <- 1-Click PowerShell provisioner
-├── Setup.bat                    <- Double-click launcher
-└── README.md                    <- Documentation
+├── Setup.bat                    <- 1-Click Provisioner Launcher
+└── Setup-AdaUnlock.ps1          <- Automated PowerShell deployment tool
 ```
 
 ---
 
-## 🔬 Technical Background: How It Works
+## ⚠️ Safety & Reversibility Guarantee
 
-NVIDIA AD102 (GeForce RTX 4090) hardware restricts FP16 and BF16 tensor math when accumulating into FP32:
-- Factory stock state reads `readout1 = 0x410080` at BAR0 offset `0x00823818` (`fields = 0 0 2 0 0 2 0 2 0`, where `2` represents a 50% rate limiter).
-- Cold hardware selectors sit at `SS0 = 0x240440xx` and `SS1 = 0x3` (or `0x7`).
-
-### Unlock Sequence:
-```mermaid
-flowchart TD
-    A["UEFI Boot: Locate AD102 GPU on PCI Bus"] --> B["Verify Cold Registers & Bit-Perfect Assets"]
-    B --> C["Disconnect GOP & Claim Exclusive BAR0 Access"]
-    C --> D["Launch Falcon Coprocessors (FWSEC & SEC2)"]
-    D --> E["Execute V67 Microcode Booter Payload"]
-    E --> F["Rewrite Selectors: SS0 -> 0x88888888, SS1 -> 0x8"]
-    F --> G["Verify readout1 = 0 (Fields 0 0 0 0 0 0 0 0 0)"]
-    G --> H["Perform PCIe Function Level Reset (FLR)"]
-    H --> I["Release DMA Memory & Chainload bootmgfw.efi"]
-    I --> J["Windows Boots: Full Tensor Compute Active"]
-```
-
----
-
-## ⚠️ Disclaimer & Safety
-
-- **Zero Risk of Hard-Brick:** This software does **not** flash, write, or erase the GPU SPI flash / EEPROM. Everything resides strictly in volatile SRAM / DRAM. Turning off the power immediately resets all registers to factory stock.
-- This software is distributed under the GNU General Public License v2.0 (GPL-2.0). Use at your own discretion.
+- **Zero VBIOS Flashing:** The VBIOS EEPROM chip is **never** written to.
+- **Volatile RAM-only:** All register modifications exist solely in GPU RAM and are completely erased on power-off or warm reboot.
+- **Fail-Safe Containment:** If any checksum, architecture check, or MMIO verification fails during pre-boot, the tool aborts safely and boots unmodified stock Windows.

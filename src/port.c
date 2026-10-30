@@ -53,7 +53,7 @@ VOID GuInit(EFI_BOOT_SERVICES *Bs, EFI_PCI_IO_PROTOCOL *Pci) {
 #endif
 }
 BOOLEAN GuTargetConfig(const UINT32 *C, UINTN S, UINTN B, UINTN D, UINTN F) {
-  return C && !S && B < 256 && !D && !F && GuIsAdaPciId(C[0]) &&
+  return C && !S && B < 256 && !D && !F && GuIsSupportedPciId(C[0]) &&
     ((C[2]>>16)==0x0300U || (C[2]>>16)==0x0302U) && !((C[3]>>16)&0x7f);
 }
 BOOLEAN GuSafeToReturn(VOID) {
@@ -171,7 +171,7 @@ EFI_STATUS GuEnableMaster(VOID) {
   if(GU_PREFLIGHT_ONLY || !Gu.profile_verified || Gu.fault || Gu.retained || Gu.started || Gu.master_attributes_pending ||
      !Gu.pci || !Gu.pci->Attributes || !Gu.owned || !Gu.armed || !Gu.display_ok)goto fail;
   Status=RawRead(EfiPciIoWidthUint32,0,&Id);
-  if(EFI_ERROR(Status) || !GuIsAdaPciId(Id))goto fail;
+  if(EFI_ERROR(Status) || !GuIsSupportedPciId(Id))goto fail;
   Status=RawRead(EfiPciIoWidthUint16,4,&Command);
   if(EFI_ERROR(Status) || Command==0xffff || (Command&4) || !(Command&2))goto fail;
   Status=Gu.pci->Attributes(Gu.pci,EfiPciIoAttributeOperationSupported,0,&Supported);
@@ -216,7 +216,7 @@ EFI_STATUS GuClearMaster(VOID) {
   if(GU_PREFLIGHT_ONLY)return EFI_ACCESS_DENIED;
   /* Containment remains permitted after a latched I/O failure. */
   Status=RawRead(EfiPciIoWidthUint32,0,&Id);
-  if(EFI_ERROR(Status) || !GuIsAdaPciId(Id))goto fail;
+  if(EFI_ERROR(Status) || !GuIsSupportedPciId(Id))goto fail;
   if(Gu.master_attributes_pending) {
     if(Gu.pci!=Gu.master_pci)AttributeStatus=EFI_COMPROMISED_DATA;
     else if(!Gu.pci->Attributes)AttributeStatus=EFI_UNSUPPORTED;
@@ -261,7 +261,7 @@ EFI_STATUS GuSavePci(VOID) {
   if(Gu.saved || Gu.fault || !Gu.owned || Gu.pcie_cap<0x40 || Gu.pcie_cap>0xd4)return EFI_NOT_READY;
   for(I=0;I<64;I++)
     if(EFI_ERROR(GuConfigRead(EfiPciIoWidthUint32,(UINT32)I*4,&Gu.saved_config[I])))return EFI_DEVICE_ERROR;
-  if(!GuIsAdaPciId(Gu.saved_config[0]) ||
+  if(!GuIsSupportedPciId(Gu.saved_config[0]) ||
      (Gu.saved_config[1]&4))return EFI_ACCESS_DENIED;
   if(EFI_ERROR(GuConfigRead(EfiPciIoWidthUint16,Gu.pcie_cap+8,&Gu.saved_devctl)))return EFI_DEVICE_ERROR;
   if(Gu.saved_devctl&0x8000)return EFI_NOT_READY;
@@ -273,7 +273,7 @@ EFI_STATUS GuFlr(VOID) {
   UINT32 Identity=0,Capability=0;UINT16 Command=0xffff,Pending=0xffff,Ctl=0;
   UINTN Wait;EFI_STATUS ResetStatus;
   if(GU_PREFLIGHT_ONLY || !Gu.profile_verified || !Gu.saved || Gu.flrs || Gu.fault || !Gu.owned || !Gu.armed || !Gu.display_ok)return EFI_NOT_READY;
-  if(EFI_ERROR(GuConfigRead(EfiPciIoWidthUint32,0,&Identity)) || !GuIsAdaPciId(Identity) ||
+  if(EFI_ERROR(GuConfigRead(EfiPciIoWidthUint32,0,&Identity)) || !GuIsSupportedPciId(Identity) ||
      EFI_ERROR(GuConfigRead(EfiPciIoWidthUint16,4,&Command)) || Command==0xffff ||
      (Command&4) || !(Command&2) ||
      EFI_ERROR(GuConfigRead(EfiPciIoWidthUint32,Gu.pcie_cap+4,&Capability)) ||
@@ -304,7 +304,7 @@ EFI_STATUS GuFlr(VOID) {
   if(EFI_ERROR(ResetStatus))return EFI_DEVICE_ERROR;
   for(Wait=0;Wait<=1000000;Wait+=1000) {
     EFI_STATUS Status=RawRead(EfiPciIoWidthUint32,0,&Identity);
-    if(!EFI_ERROR(Status) && GuIsAdaPciId(Identity))return EFI_SUCCESS;
+    if(!EFI_ERROR(Status) && GuIsSupportedPciId(Identity))return EFI_SUCCESS;
     if(!EFI_ERROR(Status) && Identity!=0xffffffffU && Identity!=0)break;
     if(Wait<1000000)GuStall(1000);
   }

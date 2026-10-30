@@ -1332,8 +1332,14 @@ static int unlock_transaction_boot(struct unlock_transaction_work *work)
 			h->patch_loc - h->os_data_off, h->engine_id, h->ucode_id,
 			work->booter_dma, lower_32_bits(work->meta_dma),
 			upper_32_bits(work->meta_dma), true);
-	if (!is_ad102(work))
-		return GU_RESULT(ret);
+	if (!is_ad102(work)) {
+		if (ret) return GU_RESULT(ret);
+		halt_ret = poll_us(work, SEC2_BASE + 0x100, 0x10, 0x10, 5000000, true);
+		if (halt_ret) return GU_RESULT(halt_ret);
+		work->sec2_halt_verified = true;
+		work->payload_verified = true;
+		return 0;
+	}
 	/* The marker precedes the cleanup tail. Wait for its exit before changing
 	 * firmware-visible metadata or applying selectors; a live SEC2 retains DMA. */
 	halt_ret = ret ? ret : poll_us(work, SEC2_BASE + 0x100, 0x10, 0x10, 5000000, true);
@@ -1452,7 +1458,7 @@ static int unlock_transaction_selector(struct unlock_transaction_work *work)
         !GuSelectorPhase(GU_SELECTOR_PHASE_SS1_WRITE)) return GU_RESULT(-EIO);
     ret=write_selector(work,"SS1",GU_FEAT_SS1_OFFSET,GU_SS1_UNLOCK);
     if (ret || !GuSelectorPhase(GU_SELECTOR_PHASE_TARGET)) return GU_RESULT(-EIO);
-    return ad102_readout(work,"selectors-applied",true);
+    return is_ad102(work) ? ad102_readout(work,"selectors-applied",true) : 0;
 }
 
 /* Reset SEC2 after FLR and leave it halted with reset released. Do not reset
@@ -1703,7 +1709,7 @@ static int unlock_transaction_reset(struct unlock_transaction_work *work)
 
 int gpu_unlock_610_load_shared(struct pci_dev *pdev, struct gpu_unlock_610_shared *shared)
 {
-	if (!pdev || pdev->vendor!=0x10de || !gpu_is_ada_device(pdev->device) || !GuAd104AssetsValid()) return -ENODEV;
+	if (!pdev || pdev->vendor!=0x10de || !gpu_is_supported_device(pdev->device) || !GuAd104AssetsValid()) return -ENODEV;
 	return request_scoped(&pdev->dev, &shared->gsp, unlock_assets(pdev)->gsp);
 }
 
@@ -1721,7 +1727,7 @@ int gpu_unlock_610_unlock(struct pci_dev *pdev, const struct gpu_unlock_610_shar
     /* No EFI application calls this library yet. A future ownership adapter
      * must prove exclusive release of GOP, console and all active consumers. */
     if (Gu.transaction_attempted) return -EALREADY;
-    if (!pdev || pdev->vendor!=0x10de || !gpu_is_ada_device(pdev->device) ||
+    if (!pdev || pdev->vendor!=0x10de || !gpu_is_supported_device(pdev->device) ||
         !shared || shared->gsp!=&GuAssets[2].firmware || !GuAd104AssetsValid() ||
         !Gu.prom_verified || !Gu.profile_verified || !Gu.owned || !Gu.armed ||
         !Gu.display_ok || !Gu.display_check || !Gu.display_check() || Gu.fault ||

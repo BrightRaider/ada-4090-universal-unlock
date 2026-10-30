@@ -29,6 +29,16 @@ static inline bool gpu_is_ada_device(u16 dev) {
 	return (dev == 0x2684u || dev == 0x2685u ||  /* RTX 4090, 4090D (AD102) */
 	        dev == 0x2704u || dev == 0x2703u || dev == 0x2705u); /* RTX 4080, 4080 SUPER, 4070 Ti SUPER (AD103) */
 }
+
+static inline bool gpu_is_ampere_device(u16 dev) {
+	return (dev == 0x2204u || dev == 0x2208u ||  /* RTX 3090, 3090 Ti */
+	        dev == 0x2206u || dev == 0x220au ||  /* RTX 3080 Ti, 3080 10GB */
+	        dev == 0x2216u || dev == 0x2207u);   /* RTX 3080 12GB, CMP 90HX */
+}
+
+static inline bool gpu_is_supported_device(u16 dev) {
+	return gpu_is_ada_device(dev) || gpu_is_ampere_device(dev);
+}
 #define GU_V67_SIZE 0xfa00u
 #define GU_WPR_META_SIZE 256u
 #define GU_WPR_META_MAGIC 0xdc3aae21371a60b3ull

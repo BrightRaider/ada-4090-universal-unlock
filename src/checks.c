@@ -28,7 +28,7 @@ BOOLEAN GuCheckConfig(const UINT32 Config[64], UINTN Segment, UINTN Bus,
   *Out = Caps;
   if (Config == NULL || Segment != 0 || Bus > 255 || Device > 31 || Function > 7)
     return FALSE;
-  if (!GuIsAdaPciId(Config[0]) ||
+  if (!GuIsSupportedPciId(Config[0]) ||
       ConfigByte(Config, 0x0b) != PCI_CLASS_DISPLAY ||
       (ConfigByte(Config, PCI_HEADER_TYPE_OFFSET) & 0x7fU) != HEADER_TYPE_DEVICE)
     return FALSE;

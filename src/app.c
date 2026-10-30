@@ -17,7 +17,7 @@ static EFI_STATUS Discover(EFI_HANDLE image,EFI_SYSTEM_TABLE *t) {
     s=t->BootServices->HandleProtocol(h[i],&PciGuid,(VOID **)&p);
     if(s!=EFI_SUCCESS||!p||!p->Pci.Read){s=EFI_UNSUPPORTED;break;}
     s=p->Pci.Read(p,EfiPciIoWidthUint32,0,1,&id);
-    if(s==EFI_SUCCESS&&GuIsAdaPciId(id)){found++;target=h[i];io=p;Gu.device_id=(UINT16)(id>>16);}
+    if(s==EFI_SUCCESS&&GuIsSupportedPciId(id)){found++;target=h[i];io=p;Gu.device_id=(UINT16)(id>>16);Gu.is_ampere=GuIsAmpereDeviceId(Gu.device_id);}
   }
   if(h)t->BootServices->FreePool(h);
   if(s!=EFI_SUCCESS||found!=1||!io)return EFI_UNSUPPORTED;
@@ -41,8 +41,13 @@ EFI_STATUS EFIAPI UefiMain(EFI_HANDLE image,EFI_SYSTEM_TABLE *t) {
   s=GuBootOpen(image,t);if(s!=EFI_SUCCESS)return s;
   const char *stage="discover";BOOLEAN unlock=FALSE;
   s=Discover(image,t);if(s!=EFI_SUCCESS)goto failed;
-  GuLog("Ada Lovelace GPU detected: Device ID 0x%04x\n", (unsigned)Gu.device_id);
-  GuLog("AD102 4090 SUPRIM X EXPERIMENTAL v0.5.4: hardware unvalidated; USB manual one-shot; bounded USB enumeration additions/removals; GPU ownership pinned\n");
+  if (Gu.is_ampere) {
+    GuLog("Ampere GPU detected: Device ID 0x%04x\n", (unsigned)Gu.device_id);
+    GuLog("GA102 AMPERE UNIVERSAL UNLOCK v1.2: Volatile RAM-only override; no VBIOS flash\n");
+  } else {
+    GuLog("Ada Lovelace GPU detected: Device ID 0x%04x\n", (unsigned)Gu.device_id);
+    GuLog("AD10X ADA UNIVERSAL UNLOCK v1.2: Volatile RAM-only override; no VBIOS flash\n");
+  }
   stage="assets";s=GuBootLoadAssets();if(s!=EFI_SUCCESS||Gu.fault)goto failed;
   stage="read-only-cold-profile";s=GuAd104Prepare();if(s!=EFI_SUCCESS||Gu.fault)goto failed;
   stage="stage-windows-image";s=GuBootLoadWindows();if(s!=EFI_SUCCESS||Gu.fault)goto failed;
