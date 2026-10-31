@@ -8,15 +8,12 @@
 
 ---
 
-> [!IMPORTANT]
-> # 🌟 Special Dedication & Huge Thanks to geo8 ([`geodnb`](https://github.com/geodnb))
-> ### 🏆 The Project That Started It All: [**Ada Unlock Readiness Check (`AdaUnlockCheck`)**](https://github.com/geodnb/RTX40-series-tensor-unlock-readiness-checker)
+> [!NOTE]
+> ### 🌟 Special Dedication & Massive Thanks to [geodnb](https://github.com/geodnb)
 > 
-> **A massive, heartfelt personal thank you to [geo8 (`geodnb`)](https://github.com/geodnb)!**
+> **A massive, heartfelt personal thank you to [geodnb](https://github.com/geodnb) for his pioneering research into this topic!**
 > 
-> My entire work on this project was sparked directly by his tool: [**`RTX40-series-tensor-unlock-readiness-checker`**](https://github.com/geodnb/RTX40-series-tensor-unlock-readiness-checker). Running `AdaUnlockCheck` on my own hardware gave me the critical register verification, diagnostic baseline, and the direct inspiration I needed to build this universal, 1-click dynamic UEFI pre-boot unlocker.
->
-> Without his pioneering diagnostic framework and public research, this universal Windows release would simply not exist today. **Thank you, geo8! 🙌**
+> My entire work on this project was sparked directly by his research, hardware state analysis, and technical insights into GPU cold states and register architecture. Without his help and valuable research into this topic, this universal Windows release would simply not exist today. **Thank you, geodnb! 🙌**
 
 ---
 
@@ -162,7 +159,7 @@ ightarrow$ **Key Management** (or *Custom Key Management*).
 
 ## 🙏 Acknowledgements & Credits
 
-* 🌟 **[geo8 / geodnb](https://github.com/geodnb) (Special Dedication):** Creator of the original [**Ada Unlock Readiness Check (`RTX40-series-tensor-unlock-readiness-checker`)**](https://github.com/geodnb/RTX40-series-tensor-unlock-readiness-checker). His diagnostic suite and hardware register analysis were the direct catalyst and inspiration for this entire universal Windows project. Special personal thanks for sparking this breakthrough!
+* 🌟 **[geodnb](https://github.com/geodnb) (Special Dedication):** Massive thanks for his pioneering research, hardware state analysis, and technical insights into this topic that catalyzed this entire universal Windows project.
 * **Zagitta & WildFlash1st:** For pioneering the Linux `gpu-unlock` research and `cmp90hx-unlock` rejoining methodologies.
 * **TOTORONG & JustAResearcher:** For early proof-of-concept Windows UEFI implementations.
 * **Igor Wallossek (Igor'sLAB):** For in-depth technical analysis, power verification, and community discussion.
