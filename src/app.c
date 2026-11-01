@@ -12,16 +12,18 @@ static EFI_STATUS Discover(EFI_HANDLE image,EFI_SYSTEM_TABLE *t) {
   EFI_HANDLE *h=NULL,target=NULL;EFI_PCI_IO_PROTOCOL *io=NULL;UINTN count=0,found=0;
   EFI_STATUS s=t->BootServices->LocateHandleBuffer(ByProtocol,&PciGuid,NULL,&count,&h);
   if(s==EFI_SUCCESS&&(!h||!count||count>1024))s=EFI_UNSUPPORTED;
+  UINT16 detected_dev_id = 0;
   for(UINTN i=0;s==EFI_SUCCESS&&i<count;i++) {
     EFI_PCI_IO_PROTOCOL *p=NULL;UINT32 id=0;
     s=t->BootServices->HandleProtocol(h[i],&PciGuid,(VOID **)&p);
     if(s!=EFI_SUCCESS||!p||!p->Pci.Read){s=EFI_UNSUPPORTED;break;}
     s=p->Pci.Read(p,EfiPciIoWidthUint32,0,1,&id);
-    if(s==EFI_SUCCESS&&GuIsSupportedPciId(id)){found++;target=h[i];io=p;Gu.device_id=(UINT16)(id>>16);Gu.is_ampere=GuIsAmpereDeviceId(Gu.device_id);}
+    if(s==EFI_SUCCESS&&GuIsSupportedPciId(id)){found++;target=h[i];io=p;detected_dev_id=(UINT16)(id>>16);}
   }
   if(h)t->BootServices->FreePool(h);
   if(s!=EFI_SUCCESS||found!=1||!io)return EFI_UNSUPPORTED;
   GuInit(t->BootServices,io);Gu.image=image;Gu.handle=target;
+  Gu.device_id=detected_dev_id;Gu.is_ampere=GuIsAmpereDeviceId(detected_dev_id);
   UINT32 c[64];UINTN seg,bus,dev,fun;GU_CAPS caps;
   if(!io->GetLocation)return EFI_UNSUPPORTED;
   s=io->GetLocation(io,&seg,&bus,&dev,&fun);
