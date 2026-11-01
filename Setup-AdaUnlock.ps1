@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-    Universal RTX 40 & RTX 30 Series Tensor Unlock Setup Tool (v1.3)
+    Universal RTX 40 & RTX 30 Series Tensor Unlock Setup Tool (v1.4)
 .DESCRIPTION
     Automatisches 1-Klick Setup-Tool zur Erstellung eines bootfähigen
     UEFI-Sticks mit dem universellen Ada & Ampere Rate-Limiter Unlock.
@@ -20,7 +20,7 @@ if (-not $isAdmin) {
 
 Clear-Host
 Write-Host "======================================================================" -ForegroundColor Magenta
-Write-Host "   RTX 40 & 30 SERIES UNIVERSAL UNLOCK - 1-KLICK SETUP (v1.3)          " -ForegroundColor Yellow
+Write-Host "   RTX 40 & 30 SERIES UNIVERSAL UNLOCK - 1-KLICK SETUP (v1.4)          " -ForegroundColor Yellow
 Write-Host "   Unterstützt: RTX 4090/D, 4080/S, 4070TiS | RTX 3090/Ti, 3080/Ti   " -ForegroundColor Cyan
 Write-Host "======================================================================" -ForegroundColor Magenta
 Write-Host ""

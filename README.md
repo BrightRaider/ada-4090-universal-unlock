@@ -86,9 +86,9 @@ To push hardware limits, I executed a sustained endurance run generating **20 co
 
 | Compute Mode | Stock Baseline | Expected Unlocked | Projected Boost | Status |
 | :--- | :--- | :--- | :--- | :--- |
-| **FP16 Tensor (FP32 Accum)** | ~69.3 TFLOPS | **~130.4 TFLOPS** | 🚀 **+88.2%** | Supported in v1.3 (Community benchmarks welcome!) |
-| **BF16 Tensor** | Rate Limited | **~130+ TFLOPS** | 🔥 Full Compute | Supported in v1.3 |
-| **FP32 CUDA Baseline** | ~27.5 TFLOPS | ~27.5 TFLOPS | ✅ Stock Parity | Supported in v1.3 |
+| **FP16 Tensor (FP32 Accum)** | ~69.3 TFLOPS | **~130.4 TFLOPS** | 🚀 **+88.2%** | Supported in v1.4 (Community benchmarks welcome!) |
+| **BF16 Tensor** | Rate Limited | **~130+ TFLOPS** | 🔥 Full Compute | Supported in v1.4 |
+| **FP32 CUDA Baseline** | ~27.5 TFLOPS | ~27.5 TFLOPS | ✅ Stock Parity | Supported in v1.4 |
 
 ---
 
@@ -130,7 +130,11 @@ ightarrow$ **Key Management** (or *Custom Key Management*).
 
 ## 🚀 Changelog
 
-### v1.3 (Current)
+### v1.4 (Current)
+- **Hotfix GPU Device-ID Persistence:** Resolved a regression where Gu.device_id was zeroed during UEFI port initialization, fixing stage=shared-assets status=-19 (-ENODEV).
+- **Seamless Multi-Generation Payload Loading:** Verified robust asset loading and dispatch for all Ada (AD102/AD103) and Ampere (GA102) targets.
+
+### v1.3
 - **Universal Motherboard Topology Support:** Relaxed rigid UEFI handle database assertions in `Consumers()`. Fully supports non-MSI motherboards (ASUS ROG, Gigabyte Aorus, ASRock, etc.) by accommodating vendor-specific root bridge and PCIe bus protocols.
 - **Multi-Monitor & Output Decoupling:** Replaced single-child constraints (`child == 1`) with dynamic display endpoint enumeration (supporting up to 8 outputs). Resolves `0x800000000000000f` (`EFI_ACCESS_DENIED`) on multi-display setups.
 - **Resilient GOP & Bus Driver Validation:** Broadened binding validation for OEM console and text drivers while strictly enforcing loaded image memory boundaries.
