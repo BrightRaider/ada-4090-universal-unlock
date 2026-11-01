@@ -81,6 +81,16 @@ To push hardware limits, I executed a sustained endurance run generating **20 co
 | **GPU Clock Frequency** | **Avg Load: 2,759 MHz** *(Peak: 2,775 MHz)* | 📏 Rock-solid flatline boost clock with 0% thermal throttling |
 | **Batch Reliability** | **20 / 20 Completed** | ✅ 100% bit-perfect output with zero artifacts or driver crashes |
 
+#### 🎬 Heavy Generative Video AI: MiniMax-H3 Video DiT (~20 GB VRAM)
+To test performance on next-generation generative video architectures under near-capacity memory pressure, I benchmarked **MiniMax-H3 (Hailuo Video DiT)** with a **BF16 Turbo LoRA** and **Qwen3-VL 32B AWQ text encoder** staged in **ComfyUI** (19,995 MB VRAM allocated, 5.0s video generation):
+
+| Execution State | Sampling Latency | Total Render Time (20 Steps) | Real-World Improvement |
+| :--- | :--- | :--- | :--- |
+| **Stock RTX 4090 (Factory Baseline)** | **15.20 s / it** | **304 seconds** *(5 min, 04 sec)* | Baseline |
+| **Unlocked RTX 4090 (v1.4 UEFI)** | **11.15 s / it** | **223 seconds** *(3 min, 43 sec)* | 🚀 **+36.3% Faster Inference** |
+
+*Impact:* Video generation transformers (DiT) spend heavy compute in attention and projection matrix multiplications. The unlock directly accelerates these operations, saving **81 seconds per 5-second video clip** (slashing render time from over 5 minutes down to 3m 43s).
+
 ### NVIDIA GeForce RTX 30 Series (Ampere GA102 - Architecture Reference)
 *Note: The RTX 4090 above was measured and verified directly on my local test rig. The Ampere support added in v1.2+ is based on architectural register parity and upstream community research (Zagitta / WildFlash1st). Below are the expected reference targets; community benchmark submissions and PRs are warmly welcome!*
 
