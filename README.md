@@ -82,13 +82,13 @@ To push hardware limits, I executed a sustained endurance run generating **20 co
 | **Batch Reliability** | **20 / 20 Completed** | ✅ 100% bit-perfect output with zero artifacts or driver crashes |
 
 ### NVIDIA GeForce RTX 30 Series (Ampere GA102 - Architecture Reference)
-*Note: The RTX 4090 above was measured and verified directly on my local test rig. The Ampere support added in v1.2 is based on architectural register parity and upstream community research (Zagitta / WildFlash1st). Below are the expected reference targets; community benchmark submissions and PRs are warmly welcome!*
+*Note: The RTX 4090 above was measured and verified directly on my local test rig. The Ampere support added in v1.2+ is based on architectural register parity and upstream community research (Zagitta / WildFlash1st). Below are the expected reference targets; community benchmark submissions and PRs are warmly welcome!*
 
 | Compute Mode | Stock Baseline | Expected Unlocked | Projected Boost | Status |
 | :--- | :--- | :--- | :--- | :--- |
-| **FP16 Tensor (FP32 Accum)** | ~69.3 TFLOPS | **~130.4 TFLOPS** | 🚀 **+88.2%** | Supported in v1.2 (Community benchmarks welcome!) |
-| **BF16 Tensor** | Rate Limited | **~130+ TFLOPS** | 🔥 Full Compute | Supported in v1.2 |
-| **FP32 CUDA Baseline** | ~27.5 TFLOPS | ~27.5 TFLOPS | ✅ Stock Parity | Supported in v1.2 |
+| **FP16 Tensor (FP32 Accum)** | ~69.3 TFLOPS | **~130.4 TFLOPS** | 🚀 **+88.2%** | Supported in v1.3 (Community benchmarks welcome!) |
+| **BF16 Tensor** | Rate Limited | **~130+ TFLOPS** | 🔥 Full Compute | Supported in v1.3 |
+| **FP32 CUDA Baseline** | ~27.5 TFLOPS | ~27.5 TFLOPS | ✅ Stock Parity | Supported in v1.3 |
 
 ---
 
@@ -127,6 +127,13 @@ ightarrow$ **Key Management** (or *Custom Key Management*).
 *Secure Boot remains 100% active and protected against malware while allowing the unlock binary to run.*
 
 ---
+
+## 🚀 Changelog
+
+### v1.3 (Current)
+- **Universal Motherboard Topology Support:** Relaxed rigid UEFI handle database assertions in `Consumers()`. Fully supports non-MSI motherboards (ASUS ROG, Gigabyte Aorus, ASRock, etc.) by accommodating vendor-specific root bridge and PCIe bus protocols.
+- **Multi-Monitor & Output Decoupling:** Replaced single-child constraints (`child == 1`) with dynamic display endpoint enumeration (supporting up to 8 outputs). Resolves `0x800000000000000f` (`EFI_ACCESS_DENIED`) on multi-display setups.
+- **Resilient GOP & Bus Driver Validation:** Broadened binding validation for OEM console and text drivers while strictly enforcing loaded image memory boundaries.
 
 ## 🛠️ Repository Structure
 

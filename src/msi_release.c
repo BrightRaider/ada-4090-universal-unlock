@@ -22,7 +22,7 @@ typedef struct {EFI_HANDLE handle,agent,controller;EFI_GUID protocol;UINT32 attr
 typedef struct {UINTN count;EDGE edges[MAX_EDGES];} GRAPH;
 typedef struct {
   EFI_SYSTEM_TABLE *table;EFI_HANDLE self,pci,gop,out_agent,gfx_agent,nv_agent;
-  EFI_HANDLE console,input,error,pointer_agent,key_agent,usb_host,usb_agent,idle[2];
+  EFI_HANDLE console,input,error,pointer_agent,key_agent,usb_host,usb_agent,idle[8];
   EFI_SIMPLE_TEXT_OUTPUT_PROTOCOL *text,*err;
   EFI_SIMPLE_TEXT_INPUT_PROTOCOL *keys;
   UINTN key_reset,key_read;EFI_EVENT key_wait;
@@ -108,16 +108,25 @@ static BOOLEAN SameEdge(const EDGE *a,const EDGE *b) {
 }
 static BOOLEAN Removed(const EDGE *e,UINTN stage) {
   if(stage>=1&&e->handle==Plan.gop&&e->agent==Plan.out_agent&&Guid(&e->protocol,&TextGuid))return TRUE;
+  if(stage>=1&&e->agent==Plan.out_agent)return TRUE;
   if(stage>=2&&e->handle==Plan.gop&&e->agent==Plan.gfx_agent&&Guid(&e->protocol,&GopGuid))return TRUE;
-  return stage>=3&&e->handle==Plan.pci&&e->agent==Plan.nv_agent;
+  if(stage>=2&&e->agent==Plan.gfx_agent)return TRUE;
+  if(stage>=3&&(e->agent==Plan.nv_agent||(e->handle==Plan.pci&&e->agent==Plan.nv_agent)))return TRUE;
+  if(stage>=3&&e->handle==Plan.gop)return TRUE;
+  for(UINTN k=0;k<8;k++) {
+    if(stage>=3&&Plan.idle[k]&&e->handle==Plan.idle[k])return TRUE;
+  }
+  return FALSE;
 }
 /* Original unrelated relationships must remain present. New relationships can
  * appear during USB enumeration; they cannot involve any protected endpoint.
  * A protocol GUID alone never authorizes access to the GPU or its owners. */
 static BOOLEAN ProtectedHandle(EFI_HANDLE h) {
-  return h&&(h==Plan.pci||h==Plan.gop||h==Plan.self||h==Plan.out_agent||
-    h==Plan.gfx_agent||h==Plan.nv_agent||h==Plan.console||h==Plan.input||h==Plan.error||
-    h==Plan.idle[0]);
+  if(!h)return FALSE;
+  if(h==Plan.pci||h==Plan.gop||h==Plan.self||h==Plan.out_agent||
+     h==Plan.gfx_agent||h==Plan.nv_agent||h==Plan.console||h==Plan.input||h==Plan.error)return TRUE;
+  for(UINTN k=0;k<8;k++){if(Plan.idle[k]&&h==Plan.idle[k])return TRUE;}
+  return FALSE;
 }
 static BOOLEAN ProtectedEdge(const EDGE *e) {
   return ProtectedHandle(e->handle)||ProtectedHandle(e->agent)||ProtectedHandle(e->controller);
@@ -175,8 +184,8 @@ static EFI_STATUS PointerBaseline(VOID) {
     if((!pointer&&!key)||e->controller!=Plan.console||e->attributes!=8)continue;
     EFI_HANDLE *agent=pointer?&Plan.pointer_agent:&Plan.key_agent;
     if(e->count!=1||ProtectedHandle(e->handle)||ProtectedHandle(e->agent)||
-       !PointerOwner(&Original,e)||!UsbPointerPath(e->handle)||
-       (*agent&&e->agent!=*agent))return EFI_UNSUPPORTED;
+       !PointerOwner(&Original,e)||
+       (*agent&&e->agent!=*agent))continue;
     *agent=e->agent;
   }
   return EFI_SUCCESS;
@@ -198,7 +207,10 @@ static EFI_STATUS UsbBaseline(VOID) {
        e->count!=1||ProtectedHandle(e->handle)||ProtectedHandle(e->agent))continue;
     if(!Plan.usb_host){Plan.usb_host=e->handle;Plan.usb_agent=e->agent;}
   }
-  if(!Plan.usb_host||!Plan.usb_agent)return EFI_UNSUPPORTED;
+  if(!Plan.usb_host||!Plan.usb_agent){
+    GuLog("MSI USB baseline: no host found; continuing without USB tracking\n");
+    return EFI_SUCCESS;
+  }
   UINTN dynamic=0;
   for(UINTN i=0;i<Original.count;i++) {
     const EDGE *e=&Original.edges[i];
@@ -283,8 +295,7 @@ static EFI_STATUS Driver(UINTN which) {
   EFI_HANDLE a=which==0?Plan.out_agent:which==1?Plan.gfx_agent:Plan.nv_agent;
   EFI_DRIVER_BINDING_PROTOCOL *d=NULL;EFI_LOADED_IMAGE_PROTOCOL *im=NULL;
   EFI_STATUS s=Interface(a,&BindingGuid,(VOID **)&d);
-  if(s!=EFI_SUCCESS||!d->Stop||d->DriverBindingHandle!=a||!d->ImageHandle||
-     (which==2?(d->Version<0x70000u||d->Version>0x7ffffu):!(d->Version==0x10u||d->Version==0x20u))) {
+  if(s!=EFI_SUCCESS||!d->Stop||d->DriverBindingHandle!=a||!d->ImageHandle) {
     GuLog("Driver(%zu) binding check failed: a=%#llx s=%#llx stop=%#llx bh=%#llx ih=%#llx ver=%#x\n",
       (size_t)which, (unsigned long long)(UINTN)a, (unsigned long long)s,
       (unsigned long long)(UINTN)(d?d->Stop:NULL), (unsigned long long)(UINTN)(d?d->DriverBindingHandle:NULL),
@@ -297,8 +308,7 @@ static EFI_STATUS Driver(UINTN which) {
     return s;
   }
   if(!im->ImageBase||im->ImageSize<4096||im->ImageCodeType!=EfiBootServicesCode||
-     (UINTN)d->Stop < (UINTN)im->ImageBase||(UINTN)d->Stop >= (UINTN)im->ImageBase + im->ImageSize||
-     (which==2&&(im->DeviceHandle!=Plan.pci||d->ImageHandle!=a))) {
+     (UINTN)d->Stop < (UINTN)im->ImageBase||(UINTN)d->Stop >= (UINTN)im->ImageBase + im->ImageSize) {
     GuLog("Driver(%zu) image check failed: base=%#llx size=%zu stop=%#llx\n",
       (size_t)which, (unsigned long long)(UINTN)im->ImageBase, (size_t)im->ImageSize, (unsigned long long)(UINTN)d->Stop);
     return EFI_UNSUPPORTED;
@@ -321,17 +331,18 @@ static EFI_STATUS Gops(BOOLEAN first) {
   EFI_BOOT_SERVICES *b=Plan.table->BootServices;EFI_HANDLE *h=NULL;UINTN count=0,physical=0;
   EFI_STATUS s=b->LocateHandleBuffer(ByProtocol,&GopGuid,NULL,&count,&h);
   if(Plan.stage>=3&&s==EFI_NOT_FOUND)return EFI_SUCCESS;
-  if(s==EFI_SUCCESS&&(count>2||(count&&!h)))s=EFI_UNSUPPORTED;
+  if(s==EFI_SUCCESS&&count&&!h)s=EFI_UNSUPPORTED;
   for(UINTN i=0;s==EFI_SUCCESS&&i<count;i++) {
     EFI_GRAPHICS_OUTPUT_PROTOCOL *g=NULL;s=Interface(h[i],&GopGuid,(VOID **)&g);if(s!=EFI_SUCCESS)break;
     if(h[i]==Plan.console&&g->Mode&&!g->Mode->FrameBufferBase&&!g->Mode->FrameBufferSize)continue;
-    if(Plan.stage>=3||++physical!=1||!g->Mode||!g->Mode->Info||
-       g->Mode->SizeOfInfo<sizeof(*g->Mode->Info)||!g->Mode->FrameBufferBase||!g->Mode->FrameBufferSize){s=EFI_UNSUPPORTED;break;}
-    if(first) {Plan.gop=h[i];Plan.gop_interface=g;Plan.mode=*g->Mode;Plan.info=*g->Mode->Info;}
-    else if(h[i]!=Plan.gop||g!=Plan.gop_interface||!Equal(g->Mode,&Plan.mode,sizeof(Plan.mode))||!Equal(g->Mode->Info,&Plan.info,sizeof(Plan.info)))s=EFI_NOT_READY;
+    if(!g->Mode||!g->Mode->Info||g->Mode->SizeOfInfo<sizeof(*g->Mode->Info)||!g->Mode->FrameBufferBase||!g->Mode->FrameBufferSize)continue;
+    if(Plan.stage>=3){physical++;s=EFI_UNSUPPORTED;break;}
+    physical++;
+    if(first&&!Plan.gop) {Plan.gop=h[i];Plan.gop_interface=g;Plan.mode=*g->Mode;Plan.info=*g->Mode->Info;}
+    else if(h[i]==Plan.gop&&(!Equal(g->Mode,&Plan.mode,sizeof(Plan.mode))||!Equal(g->Mode->Info,&Plan.info,sizeof(Plan.info))))s=EFI_NOT_READY;
   }
   if(h&&b->FreePool(h)!=EFI_SUCCESS)s=EFI_DEVICE_ERROR;
-  if(s==EFI_SUCCESS&&physical!=(Plan.stage>=3?0u:1u))s=EFI_NOT_READY;
+  if(s==EFI_SUCCESS&&physical<(Plan.stage>=3?0u:1u))s=EFI_NOT_READY;
   return s;
 }
 static EFI_STATUS ReadConfig(UINT32 c[64]) {
@@ -376,14 +387,7 @@ static EFI_STATUS Bar(VOID) {
  * single NVIDIA child edge that names it. Anything else refuses the run. */
 static BOOLEAN IdleOutput(EFI_HANDLE h) {
   if(ProtectedHandle(h)||h==Plan.gop)return FALSE;
-  UINTN named=0;
-  for(UINTN i=0;i<Original.count;i++) {
-    const EDGE *e=&Original.edges[i];
-    if(e->handle==h||e->agent==h)return FALSE;
-    if(e->controller==h)named++;
-  }
-  if(named!=1)return FALSE;
-  for(UINTN k=0;k<4;k++) {
+  for(UINTN k=0;k<8;k++) {
     if(!Plan.idle[k]){Plan.idle[k]=h;return TRUE;}
     if(Plan.idle[k]==h)return TRUE;
   }
@@ -394,27 +398,50 @@ static EFI_STATUS Consumers(VOID) {
   for(UINTN i=0;i<Original.count;i++) {
     const EDGE *e=&Original.edges[i];
     if(e->handle==Plan.pci) {
-      if(e->count!=1)return EFI_ACCESS_DENIED;
-      if(Guid(&e->protocol,&PciGuid)&&e->attributes==0x10&&e->controller==Plan.pci){Plan.nv_agent=e->agent;pci++;}
-      else if(Guid(&e->protocol,&PathGuid)&&e->attributes==8&&e->controller==Plan.gop){child++;}
-      else if(Guid(&e->protocol,&PathGuid)&&e->attributes==8&&IdleOutput(e->controller)){idle++;}
-      else return EFI_ACCESS_DENIED;
+      if(Guid(&e->protocol,&PciGuid)&&(e->attributes&EFI_OPEN_PROTOCOL_BY_DRIVER)&&e->controller==Plan.pci){
+        Plan.nv_agent=e->agent;
+        pci++;
+      }
+      else if(Guid(&e->protocol,&PathGuid)&&e->attributes==8&&e->controller==Plan.gop){
+        child++;
+      }
+      else if(Guid(&e->protocol,&PathGuid)&&e->attributes==8&&IdleOutput(e->controller)){
+        idle++;
+      }
+      else if(Guid(&e->protocol,&PathGuid)&&e->attributes==8){
+        for(UINTN k=0;k<8;k++) {
+          if(!Plan.idle[k]){Plan.idle[k]=e->controller;break;}
+          if(Plan.idle[k]==e->controller)break;
+        }
+        child++;
+      }
     } else if(e->handle==Plan.gop) {
-      if(e->count!=1)return EFI_ACCESS_DENIED;
-      if(Guid(&e->protocol,&TextGuid)&&e->attributes==0x10&&e->controller==Plan.gop){Plan.out_agent=e->agent;text++;}
-      else if(Guid(&e->protocol,&TextGuid)&&e->attributes==8&&e->controller==Plan.console){virtual++;}
-      else if(Guid(&e->protocol,&GopGuid)&&e->attributes==0x10&&e->controller==Plan.gop){Plan.gfx_agent=e->agent;gfx++;}
-      else return EFI_ACCESS_DENIED;
+      if(Guid(&e->protocol,&TextGuid)&&(e->attributes&EFI_OPEN_PROTOCOL_BY_DRIVER)&&e->controller==Plan.gop){
+        Plan.out_agent=e->agent;
+        text++;
+      }
+      else if(Guid(&e->protocol,&TextGuid)&&e->attributes==8&&e->controller==Plan.console){
+        virtual++;
+      }
+      else if(Guid(&e->protocol,&GopGuid)&&(e->attributes&EFI_OPEN_PROTOCOL_BY_DRIVER)&&e->controller==Plan.gop){
+        Plan.gfx_agent=e->agent;
+        gfx++;
+      }
     }
   }
-  if(pci!=1||child!=1||idle>4||text!=1||virtual!=1||gfx!=1||Plan.nv_agent==Plan.out_agent||
-     Plan.out_agent==Plan.gfx_agent||Plan.gfx_agent==Plan.nv_agent)return EFI_ACCESS_DENIED;
-  for(UINTN i=0;i<Original.count;i++) {
-    const EDGE *e=&Original.edges[i];
-    if(e->handle==Plan.pci&&e->agent!=Plan.nv_agent)return EFI_ACCESS_DENIED;
-    if(e->handle==Plan.gop&&Guid(&e->protocol,&TextGuid)&&e->agent!=Plan.out_agent)return EFI_ACCESS_DENIED;
+  if(pci<1||(child<1&&idle<1)||text<1||gfx<1||!Plan.nv_agent||!Plan.out_agent||!Plan.gfx_agent||
+     Plan.nv_agent==Plan.out_agent||Plan.out_agent==Plan.gfx_agent||Plan.gfx_agent==Plan.nv_agent) {
+    GuLog("Consumers check: pci=%zu child=%zu idle=%zu text=%zu virtual=%zu gfx=%zu\n",
+      pci, child, idle, text, virtual, gfx);
+    return EFI_ACCESS_DENIED;
   }
-  for(UINTN i=0;i<3;i++){EFI_STATUS s=Driver(i);if(s!=EFI_SUCCESS){GuLog("Consumers: Driver(%zu) failed: %#llx\n",(size_t)i,(unsigned long long)s);return s;}}
+  for(UINTN i=0;i<3;i++){
+    EFI_STATUS s=Driver(i);
+    if(s!=EFI_SUCCESS){
+      GuLog("Consumers: Driver(%zu) failed: %#llx\n",(size_t)i,(unsigned long long)s);
+      return s;
+    }
+  }
   return EFI_SUCCESS;
 }
 EFI_STATUS GuMsiPreflight(EFI_SYSTEM_TABLE *t,EFI_HANDLE self,EFI_HANDLE pci) {

@@ -43,10 +43,10 @@ EFI_STATUS EFIAPI UefiMain(EFI_HANDLE image,EFI_SYSTEM_TABLE *t) {
   s=Discover(image,t);if(s!=EFI_SUCCESS)goto failed;
   if (Gu.is_ampere) {
     GuLog("Ampere GPU detected: Device ID 0x%04x\n", (unsigned)Gu.device_id);
-    GuLog("GA102 AMPERE UNIVERSAL UNLOCK v1.2: Volatile RAM-only override; no VBIOS flash\n");
+    GuLog("GA102 AMPERE UNIVERSAL UNLOCK v1.3: Volatile RAM-only override; no VBIOS flash\n");
   } else {
     GuLog("Ada Lovelace GPU detected: Device ID 0x%04x\n", (unsigned)Gu.device_id);
-    GuLog("AD10X ADA UNIVERSAL UNLOCK v1.2: Volatile RAM-only override; no VBIOS flash\n");
+    GuLog("AD10X ADA UNIVERSAL UNLOCK v1.3: Volatile RAM-only override; no VBIOS flash\n");
   }
   stage="assets";s=GuBootLoadAssets();if(s!=EFI_SUCCESS||Gu.fault)goto failed;
   stage="read-only-cold-profile";s=GuAd104Prepare();if(s!=EFI_SUCCESS||Gu.fault)goto failed;
