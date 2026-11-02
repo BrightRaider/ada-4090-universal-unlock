@@ -87,7 +87,7 @@ To test performance on next-generation generative video architectures under near
 | Execution State | Sampling Latency | Total Render Time (20 Steps) | Real-World Improvement |
 | :--- | :--- | :--- | :--- |
 | **Stock RTX 4090 (Factory Baseline)** | **15.20 s / it** | **304 seconds** *(5 min, 04 sec)* | Baseline |
-| **Unlocked RTX 4090 (v1.4 UEFI)** | **11.15 s / it** | **223 seconds** *(3 min, 43 sec)* | 🚀 **+36.3% Faster Inference** |
+| **Unlocked RTX 4090 (v1.5 UEFI)** | **11.15 s / it** | **223 seconds** *(3 min, 43 sec)* | 🚀 **+36.3% Faster Inference** |
 
 *Impact:* Video generation transformers (DiT) spend heavy compute in attention and projection matrix multiplications. The unlock directly accelerates these operations, saving **81 seconds per 5-second video clip** (slashing render time from over 5 minutes down to 3m 43s).
 
@@ -96,9 +96,9 @@ To test performance on next-generation generative video architectures under near
 
 | Compute Mode | Stock Baseline | Expected Unlocked | Projected Boost | Status |
 | :--- | :--- | :--- | :--- | :--- |
-| **FP16 Tensor (FP32 Accum)** | ~69.3 TFLOPS | **~130.4 TFLOPS** | 🚀 **+88.2%** | Supported in v1.4 (Community benchmarks welcome!) |
-| **BF16 Tensor** | Rate Limited | **~130+ TFLOPS** | 🔥 Full Compute | Supported in v1.4 |
-| **FP32 CUDA Baseline** | ~27.5 TFLOPS | ~27.5 TFLOPS | ✅ Stock Parity | Supported in v1.4 |
+| **FP16 Tensor (FP32 Accum)** | ~69.3 TFLOPS | **~130.4 TFLOPS** | 🚀 **+88.2%** | Supported in v1.5 (Community benchmarks welcome!) |
+| **BF16 Tensor** | Rate Limited | **~130+ TFLOPS** | 🔥 Full Compute | Supported in v1.5 |
+| **FP32 CUDA Baseline** | ~27.5 TFLOPS | ~27.5 TFLOPS | ✅ Stock Parity | Supported in v1.5 |
 
 ---
 
@@ -140,7 +140,13 @@ ightarrow$ **Key Management** (or *Custom Key Management*).
 
 ## 🚀 Changelog
 
-### v1.4 (Current)
+### v1.5 (Current)
+- **Full English Internationalization:** The automated 1-click provisioner (`Setup.bat` / `Setup-AdaUnlock.ps1`) is now 100% in English for international users.
+- **Robust Multi-Method USB Drive Detection:** Overhauled drive detection using both `Win32_Volume` and storage subsystem `Get-Disk` (BusType USB). Easily detects both Removable and Fixed USB drives (e.g. SanDisk Extreme, external SSDs) and includes a manual drive letter fallback prompt if auto-detection fails.
+- **Heavy Video AI Production Benchmarks:** Added MiniMax-H3 Video DiT inference telemetry (15.20s -> 11.15s per it, +36.3% faster, saving 81s per 20-step video render under ~20 GB VRAM load).
+- **Expanded Secure Boot Guidance:** Clear troubleshooting instructions for BIOS key enrollment and disabled-mode execution across motherboard vendors.
+
+### v1.4
 - **Hotfix GPU Device-ID Persistence:** Resolved a regression where Gu.device_id was zeroed during UEFI port initialization, fixing stage=shared-assets status=-19 (-ENODEV).
 - **Seamless Multi-Generation Payload Loading:** Verified robust asset loading and dispatch for all Ada (AD102/AD103) and Ampere (GA102) targets.
 
