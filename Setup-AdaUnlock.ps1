@@ -2,31 +2,31 @@
 .SYNOPSIS
     Universal RTX 40 & RTX 30 Series Tensor Unlock Setup Tool (v1.4)
 .DESCRIPTION
-    Automatisches 1-Klick Setup-Tool zur Erstellung eines bootfähigen
-    UEFI-Sticks mit dem universellen Ada & Ampere Rate-Limiter Unlock.
+    Automated 1-Click Setup Tool to create a bootable UEFI flash drive
+    with the universal Ada Lovelace & Ampere rate-limiter unlock.
 #>
 
 param(
     [switch]$NonInteractive
 )
 
-# 1. Administrator-Rechte anfordern
+# 1. Elevate Administrator Privileges
 $isAdmin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
 if (-not $isAdmin) {
-    Write-Host "[INFO] Starte Setup mit Administrator-Rechten neu..." -ForegroundColor Cyan
+    Write-Host "[INFO] Requesting Administrator privileges..." -ForegroundColor Cyan
     Start-Process powershell.exe -Verb RunAs -ArgumentList "-NoProfile -ExecutionPolicy Bypass -File `"$PSCommandPath`""
     exit
 }
 
 Clear-Host
 Write-Host "======================================================================" -ForegroundColor Magenta
-Write-Host "   RTX 40 & 30 SERIES UNIVERSAL UNLOCK - 1-KLICK SETUP (v1.4)          " -ForegroundColor Yellow
-Write-Host "   Unterstützt: RTX 4090/D, 4080/S, 4070TiS | RTX 3090/Ti, 3080/Ti   " -ForegroundColor Cyan
+Write-Host "   RTX 40 & 30 SERIES UNIVERSAL UNLOCK - 1-CLICK SETUP (v1.4)          " -ForegroundColor Yellow
+Write-Host "   Supported: RTX 4090/D, 4080/S, 4070TiS | RTX 3090/Ti, 3080/Ti      " -ForegroundColor Cyan
 Write-Host "======================================================================" -ForegroundColor Magenta
 Write-Host ""
 
-# 2. Hardware-Erkennung (GPU)
-Write-Host "[1/4] Suche nach kompatibler NVIDIA GeForce GPU (Ada / Ampere)..." -ForegroundColor Cyan
+# 2. Hardware Detection (GPU)
+Write-Host "[1/4] Scanning for compatible NVIDIA GeForce GPU (Ada / Ampere)..." -ForegroundColor Cyan
 $gpus = Get-CimInstance Win32_VideoController | Where-Object {
     $_.Name -like "*4090*" -or $_.Name -like "*4080*" -or $_.Name -like "*4070 Ti SUPER*" -or
     $_.Name -like "*3090*" -or $_.Name -like "*3080*" -or
@@ -40,58 +40,102 @@ $gpus = Get-CimInstance Win32_VideoController | Where-Object {
 
 if ($gpus) {
     foreach ($gpu in $gpus) {
-        Write-Host "  [OK] Gefundene GPU: $($gpu.Name) ($($gpu.PNPDeviceID))" -ForegroundColor Green
+        Write-Host "  [OK] Detected target GPU: $($gpu.Name)" -ForegroundColor Green
     }
 } else {
-    Write-Host "  [WARNUNG] Keine Ziel-GPU im aktuellen System gefunden (Setup kann trotzdem fortgesetzt werden)." -ForegroundColor Yellow
+    Write-Host "  [NOTE] Target GPU not found in current device list (Setup can still proceed)." -ForegroundColor Yellow
 }
 
 Write-Host ""
-Write-Host "[2/4] Suche nach USB-Laufwerken..." -ForegroundColor Cyan
+Write-Host "[2/4] Scanning for USB Flash Drives..." -ForegroundColor Cyan
 
-# 3. USB-Laufwerk auswählen
-$usbDrives = Get-CimInstance Win32_Volume | Where-Object { $_.DriveType -eq 2 -and $_.DriveLetter }
+# 3. Comprehensive USB Drive Detection
+$detectedDrives = @()
 
-if (-not $usbDrives) {
-    Write-Host "  [FEHLER] Kein Wechseldatenträger (USB-Stick) gefunden!" -ForegroundColor Red
-    Write-Host "  Bitte stecke einen USB-Stick an und drücke eine Taste zum erneuten Suchen..." -ForegroundColor Yellow
-    [void][System.Console]::ReadKey($true)
-    $usbDrives = Get-CimInstance Win32_Volume | Where-Object { $_.DriveType -eq 2 -and $_.DriveLetter }
-    if (-not $usbDrives) {
-        Write-Host "  [ABBRUCH] Kein USB-Stick erkannt." -ForegroundColor Red
+# A: Win32_Volume removable drives
+try {
+    $removableVols = Get-CimInstance Win32_Volume -ErrorAction SilentlyContinue | Where-Object { $_.DriveType -eq 2 -and $_.DriveLetter }
+    if ($removableVols) { $detectedDrives += $removableVols }
+} catch {}
+
+# B: Storage cmdlets (USB bus type, catches USB Fixed disks / external SSDs)
+try {
+    $usbDisks = Get-Disk -ErrorAction SilentlyContinue | Where-Object { $_.BusType -eq 'USB' }
+    foreach ($d in $usbDisks) {
+        $parts = $d | Get-Partition -ErrorAction SilentlyContinue | Where-Object { $_.DriveLetter }
+        foreach ($p in $parts) {
+            $vol = Get-Volume -DriveLetter $p.DriveLetter -ErrorAction SilentlyContinue
+            if ($vol -and ($detectedDrives.DriveLetter -notcontains ($vol.DriveLetter + ":"))) {
+                $detectedDrives += [PSCustomObject]@{
+                    DriveLetter = ($vol.DriveLetter + ":")
+                    Label = $vol.FileSystemLabel
+                    Capacity = $vol.Size
+                }
+            }
+        }
+    }
+} catch {}
+
+$targetDriveLetter = $null
+
+if ($detectedDrives.Count -eq 1) {
+    $targetDrive = $detectedDrives[0]
+    $capGb = if ($targetDrive.Capacity) { [math]::Round($targetDrive.Capacity / 1GB, 2) } else { 0 }
+    Write-Host "  [OK] Auto-selected USB drive: $($targetDrive.DriveLetter) ($($targetDrive.Label), $capGb GB)" -ForegroundColor Green
+    $targetDriveLetter = $targetDrive.DriveLetter
+} elseif ($detectedDrives.Count -gt 1) {
+    Write-Host "  Multiple USB drives detected. Please select one:" -ForegroundColor Yellow
+    for ($i = 0; $i -lt $detectedDrives.Count; $i++) {
+        $capGb = if ($detectedDrives[$i].Capacity) { [math]::Round($detectedDrives[$i].Capacity / 1GB, 2) } else { 0 }
+        Write-Host "    [$($i+1)] $($detectedDrives[$i].DriveLetter) ($($detectedDrives[$i].Label), $capGb GB)"
+    }
+    $choice = Read-Host "  Enter number (1-$($detectedDrives.Count))"
+    if ($choice -match '^\d+$' -and [int]$choice -ge 1 -and [int]$choice -le $detectedDrives.Count) {
+        $targetDriveLetter = $detectedDrives[[int]$choice - 1].DriveLetter
+    }
+}
+
+if (-not $targetDriveLetter) {
+    Write-Host "  [NOTICE] Could not automatically detect a removable USB drive." -ForegroundColor Yellow
+    $manual = Read-Host "  Please manually enter your USB drive letter (e.g. E: or E)"
+    if ($manual) {
+        $manual = $manual.Trim().ToUpper()
+        if ($manual -notlike "*:") { $manual = "$manual:" }
+        if (Test-Path "$manual\") {
+            $targetDriveLetter = $manual
+            Write-Host "  [OK] Selected drive: $targetDriveLetter" -ForegroundColor Green
+        } else {
+            Write-Host "  [ERROR] Drive $manual does not exist or is not ready." -ForegroundColor Red
+            Pause
+            exit
+        }
+    } else {
+        Write-Host "  [ABORT] No drive specified." -ForegroundColor Red
         Pause
         exit
     }
 }
 
-$targetDrive = $null
-if ($usbDrives.Count -eq 1) {
-    $targetDrive = $usbDrives[0]
-    Write-Host "  [INFO] Automatisch gewähltes USB-Laufwerk: $($targetDrive.DriveLetter) ($($targetDrive.Label), $([math]::Round($targetDrive.Capacity / 1GB, 2)) GB)" -ForegroundColor Green
-} else {
-    Write-Host "  Mehrere USB-Laufwerke erkannt. Bitte wählen:" -ForegroundColor Yellow
-    for ($i = 0; $i -lt $usbDrives.Count; $i++) {
-        Write-Host "    [$($i+1)] $($usbDrives[$i].DriveLetter) ($($usbDrives[$i].Label), $([math]::Round($usbDrives[$i].Capacity / 1GB, 2)) GB)"
+$driveLetter = $targetDriveLetter
+Write-Host ""
+Write-Host "  TARGET DRIVE: $driveLetter" -ForegroundColor Yellow
+Write-Host "  NOTE: FAT32 format is recommended for UEFI boot compliance." -ForegroundColor Gray
+$formatAnswer = Read-Host "  Would you like to quick-format $driveLetter with FAT32 now? (y/N)"
+
+if ($formatAnswer -match "^[yYjJ]") {
+    Write-Host "  Formatting $driveLetter with FAT32..." -ForegroundColor Cyan
+    try {
+        Format-Volume -DriveLetter $driveLetter.TrimEnd(':') -FileSystem FAT32 -NewFileSystemLabel "GPU_UNLOCK" -Confirm:$false -ErrorAction Stop | Out-Null
+        Write-Host "  [OK] Format completed successfully." -ForegroundColor Green
+    } catch {
+        Write-Host "  [WARN] PowerShell Format-Volume failed, attempting standard format..." -ForegroundColor Yellow
+        cmd.exe /c "format $($driveLetter.TrimEnd(':')): /FS:FAT32 /V:GPU_UNLOCK /Q /Y" | Out-Null
     }
-    $choice = Read-Host "  Nummer eingeben (1-$($usbDrives.Count))"
-    $targetDrive = $usbDrives[[int]$choice - 1]
 }
 
-$driveLetter = $targetDrive.DriveLetter
+# 4. Copy Bootloader & Microcode Assets
 Write-Host ""
-Write-Host "  ZIEL-LAUFWERK: $driveLetter" -ForegroundColor Yellow
-Write-Host "  ACHTUNG: Es wird empfohlen, den Stick in FAT32 zu verwenden." -ForegroundColor Gray
-$formatAnswer = Read-Host "  Möchtest du das Laufwerk $driveLetter jetzt schnell formatieren? (j/N)"
-
-if ($formatAnswer -match "^[jJyY]") {
-    Write-Host "  Formatiere $driveLetter mit FAT32..." -ForegroundColor Cyan
-    Format-Volume -DriveLetter $driveLetter.TrimEnd(':') -FileSystem FAT32 -NewFileSystemLabel "GPU_UNLOCK" -Confirm:$false | Out-Null
-    Write-Host "  [OK] Formatierung abgeschlossen." -ForegroundColor Green
-}
-
-# 4. Dateien kopieren
-Write-Host ""
-Write-Host "[3/4] Kopiere Universal Booter & Firmware-Assets (Ada & Ampere)..." -ForegroundColor Cyan
+Write-Host "[3/4] Copying Universal Bootloader & Firmware Assets (Ada & Ampere)..." -ForegroundColor Cyan
 
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $efiSrc = Join-Path $scriptDir "bin\BOOTX64.EFI"
@@ -102,13 +146,13 @@ $certSrc = Join-Path $scriptDir "AdaUnlock_SecureBoot.cer"
 $efiDstDir = Join-Path $driveLetter "EFI\BOOT"
 New-Item -ItemType Directory -Path $efiDstDir -Force | Out-Null
 Copy-Item $efiSrc (Join-Path $efiDstDir "BOOTX64.EFI") -Force
-Write-Host "  [OK] UEFI Bootloader kopiert nach $driveLetter\EFI\BOOT\BOOTX64.EFI" -ForegroundColor Green
+Write-Host "  [OK] UEFI Bootloader copied to $driveLetter\EFI\BOOT\BOOTX64.EFI" -ForegroundColor Green
 
 if (Test-Path $ad102Src) {
     $adDst = Join-Path $driveLetter "AD102-ASSETS"
     New-Item -ItemType Directory -Path $adDst -Force | Out-Null
     Copy-Item (Join-Path $ad102Src "*") $adDst -Force
-    Write-Host "  [OK] Ada (AD102/AD103) Assets kopiert nach $driveLetter\AD102-ASSETS\" -ForegroundColor Green
+    Write-Host "  [OK] Ada (AD102/AD103) assets copied to $driveLetter\AD102-ASSETS\" -ForegroundColor Green
 }
 
 if (Test-Path $ga102Src) {
@@ -122,17 +166,17 @@ if (Test-Path $ga102Src) {
             Copy-Item $gspSrc $gspDst -Force
         }
     }
-    Write-Host "  [OK] Ampere (GA102) Assets kopiert nach $driveLetter\GA102-ASSETS\" -ForegroundColor Green
+    Write-Host "  [OK] Ampere (GA102) assets copied to $driveLetter\GA102-ASSETS\" -ForegroundColor Green
 }
 
 if (Test-Path $certSrc) {
     Copy-Item $certSrc (Join-Path $driveLetter "AdaUnlock_SecureBoot.cer") -Force
-    Write-Host "  [OK] Secure Boot Zertifikat kopiert nach $driveLetter\AdaUnlock_SecureBoot.cer" -ForegroundColor Green
+    Write-Host "  [OK] Secure Boot certificate copied to $driveLetter\AdaUnlock_SecureBoot.cer" -ForegroundColor Green
 }
 
-# 5. Integritätsprüfung
+# 5. Integrity Verification (SHA-256)
 Write-Host ""
-Write-Host "[4/4] Verifiziere SHA-256 Prüfsummen..." -ForegroundColor Cyan
+Write-Host "[4/4] Verifying bit-exact SHA-256 checksums..." -ForegroundColor Cyan
 
 $adHashes = @{
     "booter_load_ad102.bin" = "6ee05b20e1dc244c08c052f36ef28469b8d09f4955d1fe33e48a179e11a7fd49"
@@ -152,15 +196,15 @@ $gaHashes = @{
 
 $allValid = $true
 if (Test-Path (Join-Path $driveLetter "AD102-ASSETS")) {
-    Write-Host "  Prüfe AD102 Assets:" -ForegroundColor Gray
+    Write-Host "  Verifying AD102 Assets:" -ForegroundColor Gray
     foreach ($name in $adHashes.Keys) {
         $filePath = Join-Path $driveLetter "AD102-ASSETS\$name"
         if (Test-Path $filePath) {
             $actualHash = (Get-FileHash -Path $filePath -Algorithm SHA256).Hash.ToLower()
             if ($actualHash -eq $adHashes[$name]) {
-                Write-Host "    [OK] ${name}: bitgenau verifiziert." -ForegroundColor Green
+                Write-Host "    [OK] ${name}: verified bit-exact." -ForegroundColor Green
             } else {
-                Write-Host "    [FEHLER] ${name}: Hash-Fehler ($actualHash)" -ForegroundColor Red
+                Write-Host "    [FAIL] ${name}: checksum mismatch ($actualHash)" -ForegroundColor Red
                 $allValid = $false
             }
         }
@@ -168,15 +212,15 @@ if (Test-Path (Join-Path $driveLetter "AD102-ASSETS")) {
 }
 
 if (Test-Path (Join-Path $driveLetter "GA102-ASSETS")) {
-    Write-Host "  Prüfe GA102 Assets:" -ForegroundColor Gray
+    Write-Host "  Verifying GA102 Assets:" -ForegroundColor Gray
     foreach ($name in $gaHashes.Keys) {
         $filePath = Join-Path $driveLetter "GA102-ASSETS\$name"
         if (Test-Path $filePath) {
             $actualHash = (Get-FileHash -Path $filePath -Algorithm SHA256).Hash.ToLower()
             if ($actualHash -eq $gaHashes[$name]) {
-                Write-Host "    [OK] ${name}: bitgenau verifiziert." -ForegroundColor Green
+                Write-Host "    [OK] ${name}: verified bit-exact." -ForegroundColor Green
             } else {
-                Write-Host "    [FEHLER] ${name}: Hash-Fehler ($actualHash)" -ForegroundColor Red
+                Write-Host "    [FAIL] ${name}: checksum mismatch ($actualHash)" -ForegroundColor Red
                 $allValid = $false
             }
         }
@@ -186,19 +230,20 @@ if (Test-Path (Join-Path $driveLetter "GA102-ASSETS")) {
 Write-Host ""
 Write-Host "======================================================================" -ForegroundColor Magenta
 if ($allValid) {
-    Write-Host "             SETUP ERFOLGREICH ABGESCHLOSSEN!                         " -ForegroundColor Green
+    Write-Host "             SETUP COMPLETED SUCCESSFULLY!                            " -ForegroundColor Green
 } else {
-    Write-Host "       SETUP MIT WARNUNGEN/FEHLERN ABGESCHLOSSEN                      " -ForegroundColor Red
+    Write-Host "       SETUP COMPLETED WITH WARNINGS OR MISMATCHES                    " -ForegroundColor Red
 }
 Write-Host "======================================================================" -ForegroundColor Magenta
 Write-Host ""
-Write-Host "ANLEITUNG ZUM STARTEN:" -ForegroundColor Yellow
-Write-Host "1. PC neu starten und beim Hochfahren das Boot-Menü öffnen (meist F11 oder F12)."
-Write-Host "2. Den USB-Stick auswählen ('UEFI: USB...')."
-Write-Host "3. Falls Secure Boot aktiv ist und meckert:"
-Write-Host "   - BIOS -> Security / Secure Boot -> Key Management -> 'Enroll Signature' (oder 'Append db')."
-Write-Host "   - Wähle die Datei 'AdaUnlock_SecureBoot.cer' vom USB-Stick aus und speichere mit F10."
-Write-Host "4. Der Unlock läuft automatisch ab (in 0,3s) und Windows startet mit voller Rechenleistung!"
+Write-Host "HOW TO BOOT & UNLOCK:" -ForegroundColor Yellow
+Write-Host "1. Restart your PC and press your Boot Menu key (F11 on MSI/ASRock, F12 on Gigabyte, F8 on ASUS)."
+Write-Host "2. Select your USB drive ('UEFI: USB...')."
+Write-Host "3. Secure Boot Options:"
+Write-Host "   - EASIEST: In BIOS Setup, set Secure Boot to [Disabled] (or OS Type: Other OS)."
+Write-Host "   - OPTIONAL (Keep Secure Boot Active): In BIOS -> Key Management -> 'Enroll Signature' / 'Append db',"
+Write-Host "     select 'AdaUnlock_SecureBoot.cer' (or use 'Enroll EFI Image' on EFI\BOOT\BOOTX64.EFI)."
+Write-Host "4. Press 'U' at the boot prompt (executes in 300ms), and Windows will launch with full tensor power!"
 Write-Host ""
-Write-Host "Drücke eine beliebige Taste zum Beenden..."
+Write-Host "Press any key to exit..."
 [void][System.Console]::ReadKey($true)
