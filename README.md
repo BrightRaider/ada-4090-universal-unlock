@@ -177,11 +177,13 @@ ightarrow$ **Key Management** (or *Custom Key Management*).
 
 ---
 
-## ⚠️ Safety & Reversibility Guarantee
+## ⚠️ Safety & Operational Notes
 
 - **Zero VBIOS Flashing:** The VBIOS EEPROM chip is **never** written to.
-- **Volatile RAM-only:** All register modifications exist solely in GPU RAM and are completely erased on power-off or warm reboot.
+- **Volatile RAM-Only:** All register modifications exist solely in GPU RAM and are completely erased on power-off or warm reboot.
+- **Windows Sleep / Standby Behavior:** Because the unlock operates purely in volatile GPU register memory, putting Windows into Sleep or Standby (ACPI S3 / Modern Standby / D3cold) causes the NVIDIA driver (`nvlddmkm.sys`) to reinitialize the GPU to factory stock limits upon waking up. For uninterrupted unlocked performance during heavy rendering or training workflows, set Windows sleep timer to **"Never"** (turning off displays is 100% fine and will not reset the GPU) or simply perform a quick reboot via the USB drive if the PC woke up from sleep.
 - **Fail-Safe Containment:** If any checksum, architecture check, or MMIO verification fails during pre-boot, the tool aborts safely and boots unmodified stock Windows.
+- **Instant Reversibility:** To return permanently to stock, unplug the USB flash drive and boot normally.
 ---
 
 ## 🙏 Acknowledgements & Credits
