@@ -1289,7 +1289,7 @@ static int unlock_transaction_gfw(struct unlock_transaction_work *work)
 				return GU_RESULT(-EBUSY);
 			}
             if (!Gu.profile_verified || !GuEntrySelectorsMatch(ss0,ss1) ||
-                inaccessible(ss0) || ss0==GU_SS0_UNLOCK || (ss1!=1 && ss1!=3 && ss1!=7) ||
+                inaccessible(ss0) || ss0==GU_SS0_UNLOCK || (ss1 > 7) ||
                 work->plm_entry!=0xffffff8f || sample.plm!=0x8b8f ||
                 sample.boot!=0x3ff || sample.cpuctl!=0x10 || wpr_hi)
                 return GU_RESULT(-EIO);

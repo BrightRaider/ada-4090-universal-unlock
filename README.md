@@ -143,7 +143,11 @@ ightarrow$ **Key Management** (or *Custom Key Management*).
 
 ## 🚀 Changelog
 
-### v1.6 (Current)
+### v1.6.1 (Current)
+- **VBIOS Factory Selector Tolerance (Resolves [#4](https://github.com/BrightRaider/ada-4090-universal-unlock/issues/4)):** Expanded cold-boot `SS1` selector verification (`profile.c` and `unlock_610.c`) to accept all un-unlocked states (`SS1 <= 7`, including `SS1 = 0x0`). Resolves pre-flight refusal (`Selectors invalid: expected SS1==1, 3 or 7`) on RTX 4090 cards with factory VBIOS revisions that initialize the secondary selector index to zero. (Special thanks to [@gabrielfougeron](https://github.com/gabrielfougeron)).
+- **PowerShell Variable Scope Fix (Resolves [#3](https://github.com/BrightRaider/ada-4090-universal-unlock/pull/3)):** Corrected variable interpolation in `Setup-AdaUnlock.ps1` during manual USB drive selection (`"${manual}:"`), preventing an `InvalidVariableReferenceWithDrive` syntax error on Windows 11 PowerShell. (Special thanks to [@gabrielfougeron](https://github.com/gabrielfougeron)).
+
+### v1.6
 - **Workstation & Multi-Root-Bridge Motherboard Compatibility:** Resolved a critical false-positive topology assertion failure in Expected() on enterprise, server, and workstation motherboards (e.g. ASUS WS C621E SAGE dual-socket Xeon, AMD WRX80 Threadripper, Supermicro). On systems equipped with BMC / IPMI graphics (ASPEED AST2500/AST2600), disconnecting the discrete GPU console causes the UEFI console splitter to prune unrelated server console handles. Relaxed handle assertions to specifically protect target discrete GPU endpoints (Plan.pci, Plan.gop, active display nodes) while permitting foreign BMC console adaptation. (Resolves [#2](https://github.com/BrightRaider/ada-4090-universal-unlock/issues/2)).
 - **Transparent Graph Diff Diagnostics:** Implemented detailed pre- and post-detach GraphDiff() diagnostics within GuMsiRelease(). Any unexpected edge or handle discrepancy across driver release stages is now explicitly cataloged in RUNxxxx.TXT with protocol GUIDs, agent handles, and controller handles.
 - **S3 Sleep State Boot Script Architecture (Experimental):** Added early DXE driver build infrastructure (AdaUnlockDxe.efi and driver_nvram.c) providing the foundation for persistent ACPI S3 sleep recovery via UEFI boot script tables.

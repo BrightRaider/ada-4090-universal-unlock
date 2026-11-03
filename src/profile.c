@@ -99,8 +99,8 @@ static BOOLEAN Registers(UINT32 *Ss0,UINT32 *Ss1) {
   }
   *Ss0=GuRead32(0x82381c);*Ss1=GuRead32(0x823820);
   GuLog("Selectors: SS0=0x%x, SS1=0x%x (fault=%u)\n", *Ss0, *Ss1, (unsigned)Gu.fault);
-  if(*Ss0==0xffffffff || (*Ss0&0xffff0000)==0xbadf0000 || *Ss0==0x88888888 || (*Ss1!=1 && *Ss1!=3 && *Ss1!=7)) {
-    GuLog("Selectors invalid: SS0=0x%x, SS1=0x%x (expected SS1==1, 3 or 7)\n", *Ss0, *Ss1);
+  if(*Ss0==0xffffffff || (*Ss0&0xffff0000)==0xbadf0000 || *Ss0==0x88888888 || (*Ss1 > 7)) {
+    GuLog("Selectors invalid: SS0=0x%x, SS1=0x%x (expected SS1 <= 7)\n", *Ss0, *Ss1);
     return FALSE;
   }
   GuLog("Registers: cold state verified (PMC=0x%x, SS0=0x%x, SS1=%u)\n", pmc, *Ss0, *Ss1);

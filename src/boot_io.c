@@ -458,7 +458,7 @@ EFI_STATUS GuBootChoose(BOOLEAN *unlock, BOOLEAN *enable_s3) {
 
     L"\r\n=======================================================\r\n"
 
-    L" UNIVERSAL GPU UNLOCK v1.6 (Ada & Ampere Edition)\r\n"
+    L" UNIVERSAL GPU UNLOCK v1.6.1 (Ada & Ampere Edition)\r\n"
 
     L"=======================================================\r\n"
 
