@@ -5,3 +5,8 @@ build/
 *.tmp
 .vscode/
 .idea/
+
+build_dxe/
+src/build_dxe/
+src/local/
+local/

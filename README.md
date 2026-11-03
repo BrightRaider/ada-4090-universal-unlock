@@ -140,7 +140,12 @@ ightarrow$ **Key Management** (or *Custom Key Management*).
 
 ## 🚀 Changelog
 
-### v1.5 (Current)
+### v1.6 (Current)
+- **Workstation & Multi-Root-Bridge Motherboard Compatibility:** Resolved a critical false-positive topology assertion failure in Expected() on enterprise, server, and workstation motherboards (e.g. ASUS WS C621E SAGE dual-socket Xeon, AMD WRX80 Threadripper, Supermicro). On systems equipped with BMC / IPMI graphics (ASPEED AST2500/AST2600), disconnecting the discrete GPU console causes the UEFI console splitter to prune unrelated server console handles. Relaxed handle assertions to specifically protect target discrete GPU endpoints (Plan.pci, Plan.gop, active display nodes) while permitting foreign BMC console adaptation. (Resolves [#2](https://github.com/BrightRaider/ada-4090-universal-unlock/issues/2)).
+- **Transparent Graph Diff Diagnostics:** Implemented detailed pre- and post-detach GraphDiff() diagnostics within GuMsiRelease(). Any unexpected edge or handle discrepancy across driver release stages is now explicitly cataloged in RUNxxxx.TXT with protocol GUIDs, agent handles, and controller handles.
+- **S3 Sleep State Boot Script Architecture (Experimental):** Added early DXE driver build infrastructure (AdaUnlockDxe.efi and driver_nvram.c) providing the foundation for persistent ACPI S3 sleep recovery via UEFI boot script tables.
+
+### v1.5
 - **Full English Internationalization:** The automated 1-click provisioner (`Setup.bat` / `Setup-AdaUnlock.ps1`) is now 100% in English for international users.
 - **Robust Multi-Method USB Drive Detection:** Overhauled drive detection using both `Win32_Volume` and storage subsystem `Get-Disk` (BusType USB). Easily detects both Removable and Fixed USB drives (e.g. SanDisk Extreme, external SSDs) and includes a manual drive letter fallback prompt if auto-detection fails.
 - **Heavy Video AI Production Benchmarks:** Added MiniMax-H3 Video DiT inference telemetry (15.20s -> 11.15s per it, +36.3% faster, saving 81s per 20-step video render under ~20 GB VRAM load).
@@ -159,7 +164,8 @@ ightarrow$ **Key Management** (or *Custom Key Management*).
 
 ```text
 ├── bin/
-│   └── BOOTX64.EFI              <- Pre-compiled, Authenticode-signed universal UEFI binary
+│   ├── BOOTX64.EFI              <- Pre-compiled, Authenticode-signed universal UEFI binary
+│   └── AdaUnlockDxe.efi         <- Pre-compiled, Authenticode-signed early DXE driver
 ├── AD102-ASSETS/                <- Ada microcode payloads (4090, 4080, 4070TiS)
 ├── GA102-ASSETS/                <- Ampere microcode payloads (3090, 3090Ti, 3080, 3080Ti)
 ├── src/                         <- Full C source code for the universal UEFI application

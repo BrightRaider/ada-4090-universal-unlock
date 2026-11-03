@@ -34,6 +34,7 @@ try {
 
     $sources = @(
         'app.c',
+        'driver_nvram.c',
         'boot_io.c',
         'msi_release.c',
         'port.c',

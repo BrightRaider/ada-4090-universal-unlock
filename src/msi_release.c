@@ -241,6 +241,10 @@ static BOOLEAN Expected(UINTN stage,BOOLEAN claimed) {
   UINTN own=0;
   for(UINTN i=0;i<Original.count;i++) {
     if(Removed(&Original.edges[i],stage))continue;
+    /* On multi-socket, server, and workstation motherboards (e.g. ASUS WS C621E SAGE with BMC AST2500),
+     * only edges touching protected GPU/GOP/console endpoints must be asserted; unrelated platform edges
+     * (BMC, IPMI, secondary root bridges) may adapt during console detach without compromising GPU isolation. */
+    if(!ProtectedEdge(&Original.edges[i]))continue;
     UINTN matches=0;
     for(UINTN j=0;j<Current.count;j++)if(SameEdge(&Original.edges[i],&Current.edges[j]))matches++;
     if(matches!=1&&!(matches==0&&UsbRemoved(i)))return FALSE;
@@ -262,16 +266,17 @@ static VOID NoteEdge(const char *kind,const EDGE *e) {
     e->protocol.Data1,e->attributes,e->count);
 }
 /* Name the first stage-3 edge that is missing or unexpected after a failed Expected(). */
-static VOID GraphDiff(BOOLEAN claimed) {
+static VOID GraphDiff(UINTN stage,BOOLEAN claimed) {
   for(UINTN i=0;i<Original.count;i++) {
-    if(Removed(&Original.edges[i],3))continue;
+    if(Removed(&Original.edges[i],stage))continue;
+    if(!ProtectedEdge(&Original.edges[i]))continue;
     UINTN matches=0;
     for(UINTN j=0;j<Current.count;j++)if(SameEdge(&Original.edges[i],&Current.edges[j]))matches++;
     if(matches!=1&&!(matches==0&&UsbRemoved(i))){NoteEdge(matches?"duplicate":"missing",&Original.edges[i]);return;}
   }
   for(UINTN j=0;j<Current.count;j++) {
     const EDGE *e=&Current.edges[j];
-    if(!KnownEdge(e,3)&&!(claimed&&OwnEdge(e))&&ProtectedEdge(e)&&!PointerAddition(e)){NoteEdge("unexpected",e);return;}
+    if(!KnownEdge(e,stage)&&!(claimed&&OwnEdge(e))&&ProtectedEdge(e)&&!PointerAddition(e)){NoteEdge("unexpected",e);return;}
     for(UINTN k=j+1;k<Current.count;k++)if(SameEdge(e,&Current.edges[k])){NoteEdge("duplicate",e);return;}
   }
 }
@@ -501,7 +506,7 @@ static EFI_STATUS ClaimRestore(VOID) {
   if(s==EFI_SUCCESS)s=Snapshot(&Current);
   if(s==EFI_SUCCESS&&!Expected(3,FALSE)) {
     GuLog("ClaimRestore failed at Expected(3, FALSE)\n");
-    GraphDiff(FALSE);
+    GraphDiff(3, FALSE);
     s=EFI_NOT_READY;
   }
   if(s==EFI_SUCCESS)s=b->OpenProtocol(Plan.pci,&PciGuid,(VOID **)&io,Plan.self,NULL,EFI_OPEN_PROTOCOL_EXCLUSIVE);
@@ -527,7 +532,7 @@ static EFI_STATUS ClaimRestore(VOID) {
   if(s==EFI_SUCCESS)s=Snapshot(&Current);
   if(s==EFI_SUCCESS&&!Expected(3,TRUE)) {
     GuLog("ClaimRestore failed at Expected(3, TRUE)\n");
-    GraphDiff(TRUE);
+    GraphDiff(3, TRUE);
     s=EFI_NOT_READY;
   }
   if(s==EFI_SUCCESS&&mask) {
@@ -580,7 +585,11 @@ EFI_STATUS GuMsiRelease(VOID) {
     if(s==EFI_SUCCESS)s=Gops(FALSE);
     EFI_TPL old=b->RaiseTPL(TPL_NOTIFY);
     if(s==EFI_SUCCESS)s=Snapshot(&Current);
-    if(s==EFI_SUCCESS&&!Expected(stage-1,FALSE))s=EFI_NOT_READY;
+    if(s==EFI_SUCCESS&&!Expected(stage-1,FALSE)) {
+      NOTE("GuMsiRelease: pre-detach Expected(%zu) failed\n", (size_t)(stage-1));
+      GraphDiff(stage-1, FALSE);
+      s=EFI_NOT_READY;
+    }
     if(s==EFI_SUCCESS)s=Driver(stage-1);
     b->RestoreTPL(old);
     if(s!=EFI_SUCCESS||Gu.fault)return s==EFI_SUCCESS?EFI_DEVICE_ERROR:s;
@@ -592,7 +601,11 @@ EFI_STATUS GuMsiRelease(VOID) {
     if(s!=EFI_SUCCESS||Gu.fault)return s==EFI_SUCCESS?EFI_DEVICE_ERROR:s;
     Plan.stage=stage;
     s=Snapshot(&Current);
-    if(s==EFI_SUCCESS&&!Expected(stage,FALSE))s=EFI_NOT_READY;
+    if(s==EFI_SUCCESS&&!Expected(stage,FALSE)) {
+      NOTE("GuMsiRelease: post-detach Expected(%zu) failed\n", (size_t)stage);
+      GraphDiff(stage, FALSE);
+      s=EFI_NOT_READY;
+    }
     if(s==EFI_SUCCESS)s=Alive();
     if(s==EFI_SUCCESS)s=Gops(FALSE);
     if(s!=EFI_SUCCESS)return s;
@@ -614,7 +627,7 @@ BOOLEAN GuMsiReleased(VOID) {
   else if(attrs & EFI_PCI_IO_ATTRIBUTE_BUS_MASTER)failed="bus-master";
   else if(attrs & ~(EFI_PCI_IO_ATTRIBUTE_IO|EFI_PCI_IO_ATTRIBUTE_MEMORY))failed="attributes-extra";
   else if(Snapshot(&Current)!=EFI_SUCCESS)failed="graph-snapshot";
-  else if(!Expected(3,TRUE)){failed="graph";GraphDiff(TRUE);}
+  else if(!Expected(3,TRUE)){failed="graph";GraphDiff(3, TRUE);}
   if(failed)NOTE("MSI release check failed: %s attributes=%#llx expected=%#llx graph=%zu original=%zu fault=%u flrs=%u\n",
     failed,(unsigned long long)attrs,(unsigned long long)Plan.attributes,(size_t)Current.count,(size_t)Original.count,Gu.fault,Gu.flrs);
   if(!failed)ReportAdditions();
@@ -625,7 +638,7 @@ EFI_STATUS GuMsiFinish(VOID) {
   EFI_STATUS s=Plan.table->BootServices->CloseProtocol(Plan.pci,&PciGuid,Plan.self,NULL);
   if(s!=EFI_SUCCESS){NOTE("MSI finish close status=%#llx\n",(unsigned long long)s);return s;}
   Plan.claimed=FALSE;Gu.owned=FALSE;
-  s=Snapshot(&Current);if(s==EFI_SUCCESS&&!Expected(3,FALSE)){s=EFI_NOT_READY;GraphDiff(FALSE);}
+  s=Snapshot(&Current);if(s==EFI_SUCCESS&&!Expected(3,FALSE)){s=EFI_NOT_READY;GraphDiff(3, FALSE);}
   if(s!=EFI_SUCCESS)NOTE("MSI finish after close status=%#llx graph=%zu\n",(unsigned long long)s,(size_t)Current.count);
   return s;
 }
