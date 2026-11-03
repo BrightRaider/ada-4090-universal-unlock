@@ -143,7 +143,11 @@ ightarrow$ **Key Management** (or *Custom Key Management*).
 
 ## 🚀 Changelog
 
-### v1.6.2 (Current)
+### v1.6.3 (Current)
+- **Universal iGPU & Auxiliary Display Persistence (Resolves [#5](https://github.com/BrightRaider/ada-4090-universal-unlock/issues/5)):** Resolved silent STOP: stage=MSI-release status=0x8000000000000003 (EFI_UNSUPPORTED) in Gops() when an integrated CPU GPU (Intel UHD Graphics, AMD Radeon 7000/9000 RDNA2) or secondary display controller is active. Stage 3 display verification now properly ignores non-target platform GOP handles once the discrete GPU GOP is detached, enabling full rate-limiter unlock without disconnecting iGPU monitors. (Special thanks to [@gabrielfougeron](https://github.com/gabrielfougeron) for real-hardware verification!).
+- **Standalone Polyglot Verification Tool (Check-GPU-Unlock.bat):** Converted Check-GPU-Unlock.bat into a 100% self-contained standalone hybrid batch/python polyglot script. Operates seamlessly from any location (Desktop, USB root, network drive) without dependencies on external directories or scripts, executing live FP16 GEMM tensor core benchmarks in ~1.5 seconds.
+
+### v1.6.2
 - **Universal Multi-Console & ConSplitter Detach Isolation (Resolves [#5](https://github.com/BrightRaider/ada-4090-universal-unlock/issues/5)):** Resolved `GuMsiRelease: post-detach Expected(1) failed` on systems where the UEFI Console Splitter (`out_agent`) manages secondary or auxiliary text output handles (e.g. Serial console redirection, virtual ConOut `protocol=0x387477c2`). Scoped `Removed()` to only mark edges binding target GPU/GOP endpoints (`Plan.gop` and `Plan.pci`) as removed, preventing false-positive graph assertion failures when the UEFI console driver maintains non-GPU text handles. (Special thanks to [@gabrielfougeron](https://github.com/gabrielfougeron)).
 - **UEFI NVRAM DXE Driver Auto-Boot Menu (`[I]` / `[R]`):** Integrated persistent UEFI DXE driver installation (`[I]`) and clean removal (`[R]`) into the bootloader menu. Registers `AdaUnlockDxe.efi` via NVRAM `Driver0001` and `DriverOrder` to execute automatically during early boot on every startup and resume from hibernation without touching the boot menu.
 - **Desktop 1-Click Verification Tool:** Added `tools/quick_check.py` for ~1.5s live tensor core throughput verification under Windows.

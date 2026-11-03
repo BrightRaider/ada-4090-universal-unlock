@@ -456,7 +456,7 @@ EFI_STATUS GuBootChoose(CHAR16 *choice) {
 
     L"\r\n=======================================================\r\n"
 
-    L" UNIVERSAL GPU UNLOCK v1.6.2 (Ada & Ampere Edition)\r\n"
+    L" UNIVERSAL GPU UNLOCK v1.6.3 (Ada & Ampere Edition)\r\n"
 
     L"=======================================================\r\n"
 
