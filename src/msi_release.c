@@ -107,11 +107,9 @@ static BOOLEAN SameEdge(const EDGE *a,const EDGE *b) {
     a->attributes==b->attributes&&a->count==b->count&&Guid(&a->protocol,&b->protocol);
 }
 static BOOLEAN Removed(const EDGE *e,UINTN stage) {
-  if(stage>=1&&e->handle==Plan.gop&&e->agent==Plan.out_agent&&Guid(&e->protocol,&TextGuid))return TRUE;
-  if(stage>=1&&e->agent==Plan.out_agent)return TRUE;
-  if(stage>=2&&e->handle==Plan.gop&&e->agent==Plan.gfx_agent&&Guid(&e->protocol,&GopGuid))return TRUE;
-  if(stage>=2&&e->agent==Plan.gfx_agent)return TRUE;
-  if(stage>=3&&(e->agent==Plan.nv_agent||(e->handle==Plan.pci&&e->agent==Plan.nv_agent)))return TRUE;
+  if(stage>=1&&(e->handle==Plan.gop||e->controller==Plan.gop)&&(e->agent==Plan.out_agent||Guid(&e->protocol,&TextGuid)))return TRUE;
+  if(stage>=2&&(e->handle==Plan.gop||e->controller==Plan.gop)&&(e->agent==Plan.gfx_agent||Guid(&e->protocol,&GopGuid)))return TRUE;
+  if(stage>=3&&(e->handle==Plan.pci||e->handle==Plan.gop||e->controller==Plan.pci||e->controller==Plan.gop)&&e->agent==Plan.nv_agent)return TRUE;
   if(stage>=3&&e->handle==Plan.gop)return TRUE;
   for(UINTN k=0;k<8;k++) {
     if(stage>=3&&Plan.idle[k]&&e->handle==Plan.idle[k])return TRUE;
@@ -123,13 +121,13 @@ static BOOLEAN Removed(const EDGE *e,UINTN stage) {
  * A protocol GUID alone never authorizes access to the GPU or its owners. */
 static BOOLEAN ProtectedHandle(EFI_HANDLE h) {
   if(!h)return FALSE;
-  if(h==Plan.pci||h==Plan.gop||h==Plan.self||h==Plan.out_agent||
-     h==Plan.gfx_agent||h==Plan.nv_agent||h==Plan.console||h==Plan.input||h==Plan.error)return TRUE;
+  if(h==Plan.pci||h==Plan.gop||h==Plan.self||
+     h==Plan.console||h==Plan.input||h==Plan.error)return TRUE;
   for(UINTN k=0;k<8;k++){if(Plan.idle[k]&&h==Plan.idle[k])return TRUE;}
   return FALSE;
 }
 static BOOLEAN ProtectedEdge(const EDGE *e) {
-  return ProtectedHandle(e->handle)||ProtectedHandle(e->agent)||ProtectedHandle(e->controller);
+  return ProtectedHandle(e->handle)||ProtectedHandle(e->controller);
 }
 static BOOLEAN OwnEdge(const EDGE *e) {
   return e->handle==Plan.pci&&e->agent==Plan.self&&!e->controller&&

@@ -143,7 +143,12 @@ ightarrow$ **Key Management** (or *Custom Key Management*).
 
 ## 🚀 Changelog
 
-### v1.6.1 (Current)
+### v1.6.2 (Current)
+- **Universal Multi-Console & ConSplitter Detach Isolation (Resolves [#5](https://github.com/BrightRaider/ada-4090-universal-unlock/issues/5)):** Resolved `GuMsiRelease: post-detach Expected(1) failed` on systems where the UEFI Console Splitter (`out_agent`) manages secondary or auxiliary text output handles (e.g. Serial console redirection, virtual ConOut `protocol=0x387477c2`). Scoped `Removed()` to only mark edges binding target GPU/GOP endpoints (`Plan.gop` and `Plan.pci`) as removed, preventing false-positive graph assertion failures when the UEFI console driver maintains non-GPU text handles. (Special thanks to [@gabrielfougeron](https://github.com/gabrielfougeron)).
+- **UEFI NVRAM DXE Driver Auto-Boot Menu (`[I]` / `[R]`):** Integrated persistent UEFI DXE driver installation (`[I]`) and clean removal (`[R]`) into the bootloader menu. Registers `AdaUnlockDxe.efi` via NVRAM `Driver0001` and `DriverOrder` to execute automatically during early boot on every startup and resume from hibernation without touching the boot menu.
+- **Desktop 1-Click Verification Tool:** Added `tools/quick_check.py` for ~1.5s live tensor core throughput verification under Windows.
+
+### v1.6.1
 - **VBIOS Factory Selector Tolerance (Resolves [#4](https://github.com/BrightRaider/ada-4090-universal-unlock/issues/4)):** Expanded cold-boot `SS1` selector verification (`profile.c` and `unlock_610.c`) to accept all un-unlocked states (`SS1 <= 7`, including `SS1 = 0x0`). Resolves pre-flight refusal (`Selectors invalid: expected SS1==1, 3 or 7`) on RTX 4090 cards with factory VBIOS revisions that initialize the secondary selector index to zero. (Special thanks to [@gabrielfougeron](https://github.com/gabrielfougeron)).
 - **PowerShell Variable Scope Fix (Resolves [#3](https://github.com/BrightRaider/ada-4090-universal-unlock/pull/3)):** Corrected variable interpolation in `Setup-AdaUnlock.ps1` during manual USB drive selection (`"${manual}:"`), preventing an `InvalidVariableReferenceWithDrive` syntax error on Windows 11 PowerShell. (Special thanks to [@gabrielfougeron](https://github.com/gabrielfougeron)).
 
