@@ -100,7 +100,7 @@ if (-not $targetDriveLetter) {
     $manual = Read-Host "  Please manually enter your USB drive letter (e.g. E: or E)"
     if ($manual) {
         $manual = $manual.Trim().ToUpper()
-        if ($manual -notlike "*:") { $manual = "$manual:" }
+        if ($manual -notlike "*:") { $manual = "{$manual}:" }
         if (Test-Path "$manual\") {
             $targetDriveLetter = $manual
             Write-Host "  [OK] Selected drive: $targetDriveLetter" -ForegroundColor Green
