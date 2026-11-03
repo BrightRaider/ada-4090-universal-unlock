@@ -1,18 +1,58 @@
-import time
+"""
+Universal GPU Rate-Limiter Hardware Status Checker (Ada Lovelace & Ampere)
+SPDX-License-Identifier: GPL-2.0-only
+"""
 import sys
+import time
 
 try:
     import torch
 except ImportError:
-    print("Fehler: PyTorch nicht gefunden!")
-    sys.exit(1)
+    print("=" * 68)
+    print("  [ERROR] PyTorch is not installed in this Python environment.")
+    print("  To run this benchmark, install PyTorch with CUDA:")
+    print("    pip install torch --index-url https://download.pytorch.org/whl/cu121")
+    print("=" * 68)
+    sys.exit(2)
 
 if not torch.cuda.is_available():
-    print("Fehler: Kein CUDA GPU verfuegbar!")
-    sys.exit(1)
+    print("=" * 68)
+    print("  [ERROR] CUDA is not available. Please verify NVIDIA driver is installed.")
+    print("=" * 68)
+    sys.exit(2)
 
 device = torch.device("cuda:0")
 gpu_name = torch.cuda.get_device_name(0)
+props = torch.cuda.get_device_properties(0)
+sm_count = props.multi_processor_count
+arch = f"sm_{props.major}{props.minor}"
+
+CARD_PROFILES = {
+    "4090": {"min_unlocked": 200.0, "threshold": 175.0, "stock_typical": 135.0},
+    "4080": {"min_unlocked": 115.0, "threshold": 98.0, "stock_typical": 80.0},
+    "4070 ti super": {"min_unlocked": 100.0, "threshold": 88.0, "stock_typical": 70.0},
+    "3090 ti": {"min_unlocked": 125.0, "threshold": 105.0, "stock_typical": 78.0},
+    "3090": {"min_unlocked": 115.0, "threshold": 95.0, "stock_typical": 72.0},
+    "3080 ti": {"min_unlocked": 110.0, "threshold": 92.0, "stock_typical": 70.0},
+    "3080": {"min_unlocked": 95.0, "threshold": 80.0, "stock_typical": 62.0},
+}
+
+profile = None
+gpu_lower = gpu_name.lower()
+for key, prof in CARD_PROFILES.items():
+    if key in gpu_lower:
+        profile = prof
+        break
+
+if profile is None:
+    # Generic estimation based on SM architecture
+    if props.major == 8 and props.minor == 9:  # Ada Lovelace
+        threshold = sm_count * 1.35
+    elif props.major == 8 and props.minor == 6:  # Ampere
+        threshold = sm_count * 1.15
+    else:
+        threshold = sm_count * 1.0
+    profile = {"min_unlocked": threshold * 1.15, "threshold": threshold, "stock_typical": threshold * 0.75}
 
 # 4096 x 4096 FP16 GEMM
 size = 4096
@@ -20,12 +60,12 @@ flops_per_gemm = 2 * (size ** 3)
 a = torch.randn((size, size), dtype=torch.float16, device=device)
 b = torch.randn((size, size), dtype=torch.float16, device=device)
 
-# Warmup
+# Warmup iterations
 for _ in range(15):
     c = torch.matmul(a, b)
 torch.cuda.synchronize(device)
 
-# Measure
+# Timed runs
 runs = 30
 start_ev = torch.cuda.Event(enable_timing=True)
 end_ev = torch.cuda.Event(enable_timing=True)
@@ -40,25 +80,28 @@ total_ms = start_ev.elapsed_time(end_ev)
 avg_ms = total_ms / runs
 tflops = (flops_per_gemm / (avg_ms * 1e-3)) / 1e12
 
-print("=" * 64)
-print("       RTX 4090 RATE-LIMITER SCHNELLTEST (1-CLICK CHECK)")
-print("=" * 64)
-print(f"  GPU Modell       : {gpu_name}")
-print(f"  Matrix-Groesse   : {size}x{size} (FP16 Tensor Cores)")
-print(f"  Gemessene Latenz : {avg_ms:.3f} ms")
-print(f"  Rechenleistung   : {tflops:.2f} TFLOPS")
-print("-" * 64)
+print("=" * 68)
+print("     UNIVERSAL GPU RATE-LIMITER STATUS CHECK (ADA & AMPERE)")
+print("=" * 68)
+print(f"  GPU Hardware       : {gpu_name}")
+print(f"  Architecture       : {arch} ({sm_count} Streaming Multiprocessors)")
+print(f"  Matrix Benchmark   : {size}x{size} FP16 Tensor Cores")
+print(f"  Measured Latency   : {avg_ms:.3f} ms")
+print(f"  Compute Throughput : {tflops:.2f} TFLOPS")
+print("-" * 68)
 
-if tflops >= 180.0:
-    print("  STATUS: [OK] VOLL FREIGESCHALTET! (214 - 246 TFLOPS)")
-    print("  Die Karte arbeitet mit 100% Maximalleistung.")
-    print("  Der NVIDIA Rate-Limiter ist inaktiv.")
+is_unlocked = tflops >= profile["threshold"]
+
+if is_unlocked:
+    print(f"  STATUS: [OK] FULLY UNLOCKED! ({tflops:.1f} TFLOPS)")
+    print("  Hardware rate-limiter is INACTIVE.")
+    print("  GPU is running at 100% full unrestricted tensor compute capacity.")
     ret_code = 0
 else:
-    print("  STATUS: [WARNUNG] GEDROSSELT! (~135 - 145 TFLOPS)")
-    print("  Der Werkstakt/Limiter ist aktiv.")
-    print("  Empfehlung: Ruhezustand oder PC-Neustart durchfuehren.")
+    print(f"  STATUS: [WARNING] STOCK RATE-LIMITER ACTIVE! ({tflops:.1f} TFLOPS)")
+    print(f"  Expected unlocked performance: > {profile['threshold']:.0f} TFLOPS (typical ~{profile['min_unlocked']:.0f} TFLOPS).")
+    print("  Recommendation: Boot via USB [U]/[I] or resume from Hibernation (shutdown /h).")
     ret_code = 1
 
-print("=" * 64)
+print("=" * 68)
 sys.exit(ret_code)

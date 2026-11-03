@@ -182,6 +182,18 @@ if (Test-Path $certSrc) {
     Write-Host "  [OK] Secure Boot certificate copied to $driveLetter\AdaUnlock_SecureBoot.cer" -ForegroundColor Green
 }
 
+$checkBat = Join-Path $scriptDir "Check-GPU-Unlock.bat"
+$toolsDir = Join-Path $scriptDir "tools"
+if (Test-Path $checkBat) {
+    Copy-Item $checkBat (Join-Path $driveLetter "Check-GPU-Unlock.bat") -Force
+    $toolsDst = Join-Path $driveLetter "tools"
+    New-Item -ItemType Directory -Path $toolsDst -Force | Out-Null
+    if (Test-Path (Join-Path $toolsDir "quick_check.py")) {
+        Copy-Item (Join-Path $toolsDir "quick_check.py") (Join-Path $toolsDst "quick_check.py") -Force
+    }
+    Write-Host "  [OK] 1-Click Verification tool copied to $driveLetter\Check-GPU-Unlock.bat" -ForegroundColor Green
+}
+
 # 5. Integrity Verification (SHA-256)
 Write-Host ""
 Write-Host "[4/4] Verifying bit-exact SHA-256 checksums..." -ForegroundColor Cyan
