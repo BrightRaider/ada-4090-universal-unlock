@@ -194,7 +194,7 @@ ightarrow$ **Key Management** (or *Custom Key Management*).
 
 ## 🙏 Acknowledgements & Credits
 
-* 🌟 **[geodnb](https://github.com/geodnb) (Special Dedication):** Massive thanks for his pioneering research, hardware state analysis, and technical insights into this topic that catalyzed this entire universal Windows project.
+* 🌟 **[geodnb](https://github.com/geodnb) / [Ablation Lab](https://github.com/Ablation-Lab) (Special Dedication):** Massive thanks for pioneering research, hardware state analysis, and technical insights that catalyzed this entire universal Windows project. Be sure to explore the research over at [Ablation Lab on GitHub](https://github.com/Ablation-Lab) and subscribe to their channel on [YouTube (@AblationLab)](https://www.youtube.com/@AblationLab)!
 * **Zagitta & WildFlash1st:** For pioneering the Linux `gpu-unlock` research and `cmp90hx-unlock` rejoining methodologies.
 * **TOTORONG & JustAResearcher:** For early proof-of-concept Windows UEFI implementations.
 * **Igor Wallossek (Igor'sLAB):** For in-depth technical analysis, power verification, and community discussion.
