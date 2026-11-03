@@ -9,11 +9,14 @@
 ---
 
 > [!NOTE]
-> ### 🌟 Special Dedication & Massive Thanks to [geodnb](https://github.com/geodnb)
+> ### 🌟 Special Dedication & Massive Thanks to [geodnb](https://github.com/geodnb) & [Ablation Lab](https://github.com/Ablation-Lab)
 > 
-> **A massive, heartfelt personal thank you to [geodnb](https://github.com/geodnb) for his pioneering research into this topic!**
+> **A massive, heartfelt personal thank you to [geodnb](https://github.com/geodnb) and the team at [Ablation Lab](https://github.com/Ablation-Lab) for their pioneering research into this topic!**
 > 
-> My entire work on this project was sparked directly by his research, hardware state analysis, and technical insights into GPU cold states and register architecture. Without his help and valuable research into this topic, this universal Windows release would simply not exist today. **Thank you, geodnb! 🙌**
+> My entire work on this project was sparked directly by his research, hardware state analysis, and technical insights into GPU cold states and register architecture. Without his help and valuable research, this universal Windows release would simply not exist today.
+> 
+> 🔬 **Research Organization:** [Ablation-Lab on GitHub](https://github.com/Ablation-Lab)  
+> 📺 **Official Channel:** [@AblationLab on YouTube](https://www.youtube.com/@AblationLab)
 
 ---
 
