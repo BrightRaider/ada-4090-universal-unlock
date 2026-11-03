@@ -446,13 +446,11 @@ EFI_STATUS GuBootLoadWindows(VOID) {
 
 }
 
-EFI_STATUS GuBootChoose(BOOLEAN *unlock, BOOLEAN *enable_s3) {
+EFI_STATUS GuBootChoose(CHAR16 *choice) {
 
-  if(!unlock||!enable_s3||!Table||!Table->ConIn||!Table->ConIn->ReadKeyStroke)return EFI_UNSUPPORTED;
+  if(!choice||!Table||!Table->ConIn||!Table->ConIn->ReadKeyStroke)return EFI_UNSUPPORTED;
 
-  *unlock=FALSE;
-
-  *enable_s3=FALSE;
+  *choice=L'S';
 
   GuBootSay(
 
@@ -466,9 +464,13 @@ EFI_STATUS GuBootChoose(BOOLEAN *unlock, BOOLEAN *enable_s3) {
 
     L"  [P] Experimental S3 Persistence Unlock (Boot-Script)\r\n"
 
+    L"  [I] Install DXE Driver to UEFI NVRAM (Auto-boot / S3)\r\n"
+
+    L"  [R] Remove DXE Driver from UEFI NVRAM\r\n"
+
     L"  [S] Stock Windows (Skip unlock, normal boot)\r\n\r\n"
 
-    L"Select mode [U/P/S] (default: Stock Windows in 30s): "
+    L"Select mode [U/P/I/R/S] (default: Stock Windows in 30s): "
 
   );
 
@@ -478,11 +480,15 @@ EFI_STATUS GuBootChoose(BOOLEAN *unlock, BOOLEAN *enable_s3) {
 
     if(s==EFI_SUCCESS) {
 
-      if(key.UnicodeChar=='u'||key.UnicodeChar=='U'){*unlock=TRUE;*enable_s3=FALSE;return EFI_SUCCESS;}
+      if(key.UnicodeChar=='u'||key.UnicodeChar=='U'){*choice=L'U';return EFI_SUCCESS;}
 
-      if(key.UnicodeChar=='p'||key.UnicodeChar=='P'){*unlock=TRUE;*enable_s3=TRUE;return EFI_SUCCESS;}
+      if(key.UnicodeChar=='p'||key.UnicodeChar=='P'){*choice=L'P';return EFI_SUCCESS;}
 
-      if(key.ScanCode==0x17||key.UnicodeChar==27||key.UnicodeChar=='s'||key.UnicodeChar=='S')return EFI_SUCCESS;
+      if(key.UnicodeChar=='i'||key.UnicodeChar=='I'){*choice=L'I';return EFI_SUCCESS;}
+
+      if(key.UnicodeChar=='r'||key.UnicodeChar=='R'){*choice=L'R';return EFI_SUCCESS;}
+
+      if(key.ScanCode==0x17||key.UnicodeChar==27||key.UnicodeChar=='s'||key.UnicodeChar=='S'){*choice=L'S';return EFI_SUCCESS;}
 
     } else if(s!=EFI_NOT_READY)return s;
 

@@ -83,9 +83,29 @@ EFI_STATUS GuInstallDriverOption(EFI_HANDLE image, EFI_SYSTEM_TABLE *t) {
   bs->FreePool(buf);
   if (s != EFI_SUCCESS) return s;
 
-  // Write DriverOrder = { 0x0001 }
-  UINT16 driver_order[1] = { 0x0001 };
-  s = rs->SetVariable(L"DriverOrder", &GlobalGuid, attrs, sizeof(driver_order), driver_order);
+  // Update DriverOrder: prepend 0x0001 if not already present
+  UINT16 existing_order[64];
+  UINTN order_size = sizeof(existing_order);
+  UINT32 order_attrs = attrs;
+  EFI_STATUS order_status = rs->GetVariable(L"DriverOrder", &GlobalGuid, &order_attrs, &order_size, existing_order);
+  if (order_status == EFI_SUCCESS && order_size >= sizeof(UINT16)) {
+    UINTN count = order_size / sizeof(UINT16);
+    BOOLEAN found = FALSE;
+    for (UINTN i = 0; i < count; i++) {
+      if (existing_order[i] == 0x0001) { found = TRUE; break; }
+    }
+    if (!found) {
+      if (count > 63) count = 63;
+      UINT16 new_order[64];
+      new_order[0] = 0x0001;
+      for (UINTN i = 0; i < count; i++) new_order[i + 1] = existing_order[i];
+      s = rs->SetVariable(L"DriverOrder", &GlobalGuid, attrs, (count + 1) * sizeof(UINT16), new_order);
+    }
+  } else {
+    UINT16 driver_order[1] = { 0x0001 };
+    s = rs->SetVariable(L"DriverOrder", &GlobalGuid, attrs, sizeof(driver_order), driver_order);
+  }
+
   return s;
 }
 
@@ -94,6 +114,27 @@ EFI_STATUS GuRemoveDriverOption(EFI_SYSTEM_TABLE *t) {
   EFI_RUNTIME_SERVICES *rs = t->RuntimeServices;
   UINT32 attrs = EFI_VARIABLE_NON_VOLATILE | EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS;
   (VOID)rs->SetVariable(L"Driver0001", &GlobalGuid, attrs, 0, NULL);
-  (VOID)rs->SetVariable(L"DriverOrder", &GlobalGuid, attrs, 0, NULL);
+
+  UINT16 existing_order[64];
+  UINTN order_size = sizeof(existing_order);
+  UINT32 order_attrs = attrs;
+  EFI_STATUS s = rs->GetVariable(L"DriverOrder", &GlobalGuid, &order_attrs, &order_size, existing_order);
+  if (s == EFI_SUCCESS && order_size >= sizeof(UINT16)) {
+    UINTN count = order_size / sizeof(UINT16);
+    UINT16 new_order[64];
+    UINTN new_count = 0;
+    for (UINTN i = 0; i < count; i++) {
+      if (existing_order[i] != 0x0001) {
+        new_order[new_count++] = existing_order[i];
+      }
+    }
+    if (new_count > 0) {
+      (VOID)rs->SetVariable(L"DriverOrder", &GlobalGuid, attrs, new_count * sizeof(UINT16), new_order);
+    } else {
+      (VOID)rs->SetVariable(L"DriverOrder", &GlobalGuid, attrs, 0, NULL);
+    }
+  } else {
+    (VOID)rs->SetVariable(L"DriverOrder", &GlobalGuid, attrs, 0, NULL);
+  }
   return EFI_SUCCESS;
 }

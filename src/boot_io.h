@@ -4,7 +4,7 @@
 EFI_STATUS GuBootOpen(EFI_HANDLE,EFI_SYSTEM_TABLE *);
 EFI_STATUS GuBootLoadAssets(VOID);
 EFI_STATUS GuBootLoadWindows(VOID);
-EFI_STATUS GuBootChoose(BOOLEAN *,BOOLEAN *);
+EFI_STATUS GuBootChoose(CHAR16 *);
 EFI_STATUS GuBootWindows(VOID);
 EFI_STATUS GuBootClose(VOID);
 VOID GuBootSay(const CHAR16 *);

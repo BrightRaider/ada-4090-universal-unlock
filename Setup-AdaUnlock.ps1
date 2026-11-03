@@ -148,6 +148,14 @@ New-Item -ItemType Directory -Path $efiDstDir -Force | Out-Null
 Copy-Item $efiSrc (Join-Path $efiDstDir "BOOTX64.EFI") -Force
 Write-Host "  [OK] UEFI Bootloader copied to $driveLetter\EFI\BOOT\BOOTX64.EFI" -ForegroundColor Green
 
+$dxeSrc = Join-Path $scriptDir "bin\AdaUnlockDxe.efi"
+if (Test-Path $dxeSrc) {
+    $dxeDstDir = Join-Path $driveLetter "EFI\Drivers"
+    New-Item -ItemType Directory -Path $dxeDstDir -Force | Out-Null
+    Copy-Item $dxeSrc (Join-Path $dxeDstDir "AdaUnlockDxe.efi") -Force
+    Write-Host "  [OK] DXE Driver copied to $driveLetter\EFI\Drivers\AdaUnlockDxe.efi" -ForegroundColor Green
+}
+
 if (Test-Path $ad102Src) {
     $adDst = Join-Path $driveLetter "AD102-ASSETS"
     New-Item -ItemType Directory -Path $adDst -Force | Out-Null

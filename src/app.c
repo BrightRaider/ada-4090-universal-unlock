@@ -16,6 +16,8 @@
 
 #include "s3_save.h"
 
+#include "driver_nvram.h"
+
 static EFI_GUID PciGuid=EFI_PCI_IO_PROTOCOL_GUID;
 
 static EFI_GUID GlobalGuid={0x8be4df61,0x93ca,0x11d2,{0xaa,0x0d,0,0xe0,0x98,0x03,0x2b,0x8c}};
@@ -86,7 +88,7 @@ EFI_STATUS EFIAPI UefiMain(EFI_HANDLE image,EFI_SYSTEM_TABLE *t) {
 
   s=GuBootOpen(image,t);if(s!=EFI_SUCCESS)return s;
 
-  const char *stage="discover";BOOLEAN unlock=FALSE,enable_s3=FALSE;
+  const char *stage="discover";CHAR16 choice=L'S';
 
   s=Discover(image,t);if(s!=EFI_SUCCESS)goto failed;
 
@@ -110,7 +112,79 @@ EFI_STATUS EFIAPI UefiMain(EFI_HANDLE image,EFI_SYSTEM_TABLE *t) {
 
   stage="stage-windows-image";s=GuBootLoadWindows();if(s!=EFI_SUCCESS||Gu.fault)goto failed;
 
-  stage="manual-choice";s=GuBootChoose(&unlock,&enable_s3);if(s!=EFI_SUCCESS||Gu.fault)goto failed;
+  stage="manual-choice";s=GuBootChoose(&choice);if(s!=EFI_SUCCESS||Gu.fault)goto failed;
+
+  if (choice == L'I') {
+
+    GuLog("Operator I: Requesting DXE Driver NVRAM installation\n");
+
+    s = GuInstallDriverOption(image, t);
+
+    if (s == EFI_SUCCESS) {
+
+      GuLog("DXE Driver successfully installed to Driver0001 / DriverOrder\n");
+
+      GuBootSay(L"\r\n\r\n[OK] AdaUnlock DXE Driver installed to UEFI NVRAM (Driver0001)!\r\n"
+
+                L"Driver will execute automatically during early boot on every startup.\r\n"
+
+                L"Rebooting system in 3 seconds...\r\n");
+
+    } else {
+
+      GuLog("ERROR: Failed to install DXE Driver: %#llx\n", (unsigned long long)s);
+
+      GuBootSay(L"\r\n\r\n[ERROR] Failed to install DXE Driver to NVRAM!\r\n"
+
+                L"Rebooting in 5 seconds...\r\n");
+
+      if (t->BootServices->Stall) t->BootServices->Stall(2000000);
+
+    }
+
+    (VOID)GuBootClose();
+
+    if (t->BootServices->Stall) t->BootServices->Stall(3000000);
+
+    if (t->RuntimeServices && t->RuntimeServices->ResetSystem) {
+
+      t->RuntimeServices->ResetSystem(EfiResetWarm, EFI_SUCCESS, 0, NULL);
+
+    }
+
+    return s;
+
+  }
+
+  if (choice == L'R') {
+
+    GuLog("Operator R: Requesting DXE Driver NVRAM removal\n");
+
+    s = GuRemoveDriverOption(t);
+
+    GuLog("DXE Driver removed from Driver0001 / DriverOrder (status=%#llx)\n", (unsigned long long)s);
+
+    GuBootSay(L"\r\n\r\n[OK] AdaUnlock DXE Driver removed from UEFI NVRAM.\r\n"
+
+              L"Rebooting system in 3 seconds...\r\n");
+
+    (VOID)GuBootClose();
+
+    if (t->BootServices->Stall) t->BootServices->Stall(3000000);
+
+    if (t->RuntimeServices && t->RuntimeServices->ResetSystem) {
+
+      t->RuntimeServices->ResetSystem(EfiResetWarm, EFI_SUCCESS, 0, NULL);
+
+    }
+
+    return s;
+
+  }
+
+  BOOLEAN unlock = (choice == L'U' || choice == L'P');
+
+  BOOLEAN enable_s3 = (choice == L'P');
 
   if(!unlock) {
 
