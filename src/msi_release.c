@@ -339,7 +339,7 @@ static EFI_STATUS Gops(BOOLEAN first) {
     EFI_GRAPHICS_OUTPUT_PROTOCOL *g=NULL;s=Interface(h[i],&GopGuid,(VOID **)&g);if(s!=EFI_SUCCESS)break;
     if(h[i]==Plan.console&&g->Mode&&!g->Mode->FrameBufferBase&&!g->Mode->FrameBufferSize)continue;
     if(!g->Mode||!g->Mode->Info||g->Mode->SizeOfInfo<sizeof(*g->Mode->Info)||!g->Mode->FrameBufferBase||!g->Mode->FrameBufferSize)continue;
-    if(Plan.stage>=3){physical++;s=EFI_UNSUPPORTED;break;}
+    if(Plan.stage>=3){continue;}
     physical++;
     if(first&&!Plan.gop) {Plan.gop=h[i];Plan.gop_interface=g;Plan.mode=*g->Mode;Plan.info=*g->Mode->Info;}
     else if(h[i]==Plan.gop&&(!Equal(g->Mode,&Plan.mode,sizeof(Plan.mode))||!Equal(g->Mode->Info,&Plan.info,sizeof(Plan.info))))s=EFI_NOT_READY;
