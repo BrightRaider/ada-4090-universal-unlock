@@ -1,10 +1,13 @@
 # Universal GPU Unlock (One-Click UEFI Tool) - Ada & Ampere Edition
 
+[![GitHub Release](https://img.shields.io/github/v/release/BrightRaider/universal-gpu-unlock?color=blue&logo=github)](https://github.com/BrightRaider/universal-gpu-unlock/releases/latest)
+[![Downloads](https://img.shields.io/github/downloads/BrightRaider/universal-gpu-unlock/total?color=green&logo=github)](https://github.com/BrightRaider/universal-gpu-unlock/releases)
+[![Stars](https://img.shields.io/github/stars/BrightRaider/universal-gpu-unlock?style=social)](https://github.com/BrightRaider/universal-gpu-unlock)
 [![Architecture](https://img.shields.io/badge/Architecture-Ada%20Lovelace%20%26%20Ampere-green.svg)](#)
 [![GPU](https://img.shields.io/badge/GPU-RTX%204090%20%7C%204080%20%7C%203090%20%7C%203080-blue.svg)](#)
 [![Safety](https://img.shields.io/badge/Safety-100%25%20RAM--Only%20(Zero%20EEPROM%20Writes)-success.svg)](#)
 [![OS](https://img.shields.io/badge/OS-Windows%2010%20%2F%2011%20%7C%20WSL2-orange.svg)](#)
-[![Secure Boot](https://img.shields.io/badge/Secure%20Boot-Compatible%20(Custom%20DB)-blueviolet.svg)](#)
+[![Secure Boot](https://img.shields.io/badge/Secure%20Boot-Standard%20%26%20Custom%20Supported-blueviolet.svg)](#-secure-boot--anti-cheat-compatibility)
 
 ---
 
