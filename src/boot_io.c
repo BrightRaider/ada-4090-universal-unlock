@@ -294,7 +294,7 @@ EFI_STATUS GuBootLoadAssets(VOID) {
 
     if(s!=EFI_SUCCESS) {
 
-      GuLog("Asset load failed: %s (%s)\n", full[i], Gu.is_ampere ? "Ampere" : "Ada");
+      GuLog("Asset load failed: %s (%s)\n", full[i], Gu.is_ampere ? "Ampere" : (Gu.is_turing ? "Turing" : "Ada"));
 
       return s;
 

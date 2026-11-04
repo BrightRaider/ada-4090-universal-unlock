@@ -41,6 +41,10 @@
 #define BOOT_FILE_AD102 "gpu-unlock/610.43.03/gsp_boot_ad102.bin"
 #define BOOT_DESC_FILE_GA102 "gpu-unlock/610.43.03/gsp_boot_desc_ga102.bin"
 #define BOOT_DESC_FILE_AD102 "gpu-unlock/610.43.03/gsp_boot_desc_ad102.bin"
+#define BOOTER_FILE_TU102 "gpu-unlock/610.43.03/booter_load_tu102.bin"
+#define V67_FILE_TU102 "gpu-unlock/610.43.03/v67-tu102-610.43.03.bin"
+#define BOOT_FILE_TU102 "gpu-unlock/610.43.03/gsp_boot_tu102.bin"
+#define BOOT_DESC_FILE_TU102 "gpu-unlock/610.43.03/gsp_boot_desc_tu102.bin"
 /* The GSP boot image is bounded only by the boot descriptor, which has to
  * describe its own size; this just keeps a bad asset from being huge. */
 #define BOOT_FILE_MAX (1u << 20)
@@ -73,8 +77,19 @@ static const struct gpu_unlock_assets *unlock_assets(const struct pci_dev *pdev)
 		.signature_section = ".fwsignature_ad10x",
 		.arch = GU_BOOTER_AD10X, .boot_image_size = 36864,
 	};
+	static const struct gpu_unlock_assets tu102 = {
+		.booter = BOOTER_FILE_TU102, .gsp = GSP_FILE,
+		.boot = BOOT_FILE_TU102, .desc = BOOT_DESC_FILE_TU102,
+		.payload = V67_FILE_TU102,
+		.signature_section = ".fwsignature_tu10x",
+		.arch = GU_BOOTER_TU10X, .boot_image_size = 24576,
+	};
 
-	return gpu_is_ada_device(pdev->device) ? &ad102 : &ga102;
+	if (gpu_is_ada_device(pdev->device))
+		return &ad102;
+	if (gpu_is_turing_device(pdev->device))
+		return &tu102;
+	return &ga102;
 }
 
 /* The two falcons this module ever touches. SEC2 is the secure boot engine

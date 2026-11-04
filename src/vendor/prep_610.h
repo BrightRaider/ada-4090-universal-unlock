@@ -36,8 +36,17 @@ static inline bool gpu_is_ampere_device(u16 dev) {
 	        dev == 0x2216u || dev == 0x2207u);   /* RTX 3080 12GB, CMP 90HX */
 }
 
+static inline bool gpu_is_turing_device(u16 dev) {
+	return (dev == 0x1e04u || dev == 0x1e07u || dev == 0x1e02u ||
+	        dev == 0x1e09u || dev == 0x1e30u || dev == 0x1e35u ||
+	        dev == 0x1e81u || dev == 0x1e82u || dev == 0x1e87u ||
+	        dev == 0x1e84u || dev == 0x1eb0u || dev == 0x1eb1u ||
+	        dev == 0x1f02u || dev == 0x1f07u || dev == 0x1f06u ||
+	        dev == 0x1f47u || dev == 0x1f03u || dev == 0x1f08u || dev == 0x1f12u || dev == 0x1f36u);
+}
+
 static inline bool gpu_is_supported_device(u16 dev) {
-	return gpu_is_ada_device(dev) || gpu_is_ampere_device(dev);
+	return gpu_is_ada_device(dev) || gpu_is_ampere_device(dev) || gpu_is_turing_device(dev);
 }
 #define GU_V67_SIZE 0xfa00u
 #define GU_WPR_META_SIZE 256u

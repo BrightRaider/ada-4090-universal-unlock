@@ -1,4 +1,4 @@
-# Universal GPU Unlock (One-Click UEFI Tool) - Ada & Ampere Edition
+# Universal GPU Unlock (One-Click UEFI Tool) - Ada, Ampere & Turing Edition
 
 [![GitHub Release](https://img.shields.io/github/v/release/BrightRaider/universal-gpu-unlock?color=blue&logo=github)](https://github.com/BrightRaider/universal-gpu-unlock/releases/latest)
 [![Downloads](https://img.shields.io/github/downloads/BrightRaider/universal-gpu-unlock/total?color=green&logo=github)](https://github.com/BrightRaider/universal-gpu-unlock/releases)
@@ -36,6 +36,7 @@ The unlock takes place purely in volatile GPU RAM during pre-boot; **zero bits a
 | :--- | :--- | :--- | :--- |
 | **RTX 40 Series** | **Ada Lovelace** | RTX 4090, RTX 4090D, RTX 4080, RTX 4080 SUPER, RTX 4070 Ti SUPER | `0x2684`, `0x2685`, `0x2704`, `0x2703`, `0x2705` |
 | **RTX 30 Series** | **Ampere** | RTX 3090, RTX 3090 Ti, RTX 3080 Ti, RTX 3080 (10GB & 12GB), CMP 90HX | `0x2204`, `0x2208`, `0x2206`, `0x220a`, `0x2216`, `0x2207` |
+| **RTX 20 Series** | **Turing** *(Staging)* | RTX 2080 Ti, TITAN RTX, RTX 2080 / SUPER, RTX 2070 / SUPER, RTX 2060 / SUPER, CMP 50HX | `0x1e04`, `0x1e07`, `0x1e02`, `0x1e81`, `0x1e82`, `0x1e84`, `0x1f02`, `0x1f06`, `0x1e09` |
 
 - **Any AIB Vendor:** Works across Founders Edition, ASUS, MSI, Gigabyte, ZOTAC, PNY, Palit, Gainward, Inno3D, Galax, etc.
 - **Any Motherboard & Platform:** AMD AM4/AM5 (X570, B550, B650, X670) and Intel LGA1700 (Z690, Z790, B760) with dynamic PCIe bus scanning.
@@ -164,6 +165,12 @@ If your system has UEFI Secure Boot enabled and you do not play games with kerne
 ---
 
 ## 🚀 Changelog
+
+### v1.7.0 (In Progress / Turing Staging)
+- **Turing Architecture Dispatch (TU102 / TU104 / TU106):** Added full PCI Device ID recognition and pre-boot dispatch logic for the GeForce RTX 20 Series (RTX 2080 Ti, TITAN RTX, RTX 2080/SUPER, RTX 2070/SUPER, RTX 2060/SUPER) and CMP 50HX.
+- **TU102-ASSETS Staging Tree:** Added automated discovery for `\TU102-ASSETS\` microcode payloads with fallback resolution to shared GSP blobs.
+- **Check-GPU-Unlock.bat Turing Calibration:** Integrated `sm_75` architecture detection and target FP16 GEMM performance profiles for all RTX 20 models.
+- **Automated USB Provisioner Update:** `Setup-AdaUnlock.ps1` and `Setup.bat` now scan for Turing device IDs and automatically deploy `TU102-ASSETS\` to target USB media.
 
 ### v1.6.3 (Current)
 - **Universal iGPU & Auxiliary Display Persistence (Resolves [#5](https://github.com/BrightRaider/ada-4090-universal-unlock/issues/5)):** Resolved silent STOP: stage=MSI-release status=0x8000000000000003 (EFI_UNSUPPORTED) in Gops() when an integrated CPU GPU (Intel UHD Graphics, AMD Radeon 7000/9000 RDNA2) or secondary display controller is active. Stage 3 display verification now properly ignores non-target platform GOP handles once the discrete GPU GOP is detached, enabling full rate-limiter unlock without disconnecting iGPU monitors. (Special thanks to [@gabrielfougeron](https://github.com/gabrielfougeron) for real-hardware verification!).

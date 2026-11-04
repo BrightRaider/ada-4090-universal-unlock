@@ -20,22 +20,24 @@ if (-not $isAdmin) {
 
 Clear-Host
 Write-Host "======================================================================" -ForegroundColor Magenta
-Write-Host "   RTX 40 & 30 SERIES UNIVERSAL UNLOCK - 1-CLICK SETUP (v1.6.3)          " -ForegroundColor Yellow
-Write-Host "   Supported: RTX 4090/D, 4080/S, 4070TiS | RTX 3090/Ti, 3080/Ti      " -ForegroundColor Cyan
+Write-Host "   RTX 40, 30 & 20 SERIES UNIVERSAL UNLOCK - 1-CLICK SETUP (v1.7.0)      " -ForegroundColor Yellow
+Write-Host "   Supported: Ada (4090..4070TiS) | Ampere (3090..3080) | Turing (2080Ti..2060)" -ForegroundColor Cyan
 Write-Host "======================================================================" -ForegroundColor Magenta
 Write-Host ""
 
 # 2. Hardware Detection (GPU)
-Write-Host "[1/4] Scanning for compatible NVIDIA GeForce GPU (Ada / Ampere)..." -ForegroundColor Cyan
+Write-Host "[1/4] Scanning for compatible NVIDIA GeForce GPU (Ada / Ampere / Turing)..." -ForegroundColor Cyan
 $gpus = Get-CimInstance Win32_VideoController | Where-Object {
     $_.Name -like "*4090*" -or $_.Name -like "*4080*" -or $_.Name -like "*4070 Ti SUPER*" -or
     $_.Name -like "*3090*" -or $_.Name -like "*3080*" -or
+    $_.Name -like "*2080*" -or $_.Name -like "*2070*" -or $_.Name -like "*2060*" -or $_.Name -like "*TITAN RTX*" -or $_.Name -like "*CMP 50HX*" -or
     $_.PNPDeviceID -like "*VEN_10DE&DEV_2684*" -or $_.PNPDeviceID -like "*VEN_10DE&DEV_2685*" -or
     $_.PNPDeviceID -like "*VEN_10DE&DEV_2704*" -or $_.PNPDeviceID -like "*VEN_10DE&DEV_2703*" -or
     $_.PNPDeviceID -like "*VEN_10DE&DEV_2705*" -or
     $_.PNPDeviceID -like "*VEN_10DE&DEV_2204*" -or $_.PNPDeviceID -like "*VEN_10DE&DEV_2208*" -or
     $_.PNPDeviceID -like "*VEN_10DE&DEV_2206*" -or $_.PNPDeviceID -like "*VEN_10DE&DEV_220A*" -or
-    $_.PNPDeviceID -like "*VEN_10DE&DEV_2216*"
+    $_.PNPDeviceID -like "*VEN_10DE&DEV_2216*" -or
+    $_.PNPDeviceID -like "*VEN_10DE&DEV_1E*" -or $_.PNPDeviceID -like "*VEN_10DE&DEV_1F*"
 }
 
 if ($gpus) {
@@ -176,6 +178,22 @@ if (Test-Path $ga102Src) {
     }
     Write-Host "  [OK] Ampere (GA102) assets copied to $driveLetter\GA102-ASSETS\" -ForegroundColor Green
 }
+
+$tu102Src = Join-Path $scriptDir "TU102-ASSETS"
+if (Test-Path $tu102Src) {
+    $tuDst = Join-Path $driveLetter "TU102-ASSETS"
+    New-Item -ItemType Directory -Path $tuDst -Force | Out-Null
+    Copy-Item (Join-Path $tu102Src "*") $tuDst -Force
+    $gspDst = Join-Path $tuDst "gsp_ga10x.bin"
+    if (-not (Test-Path $gspDst)) {
+        $gspSrc = Join-Path $ad102Src "gsp_ga10x.bin"
+        if (Test-Path $gspSrc) {
+            Copy-Item $gspSrc $gspDst -Force
+        }
+    }
+    Write-Host "  [OK] Turing (TU102/TU104/TU106) assets copied to $driveLetter\TU102-ASSETS\" -ForegroundColor Green
+}
+
 
 if (Test-Path $certSrc) {
     Copy-Item $certSrc (Join-Path $driveLetter "AdaUnlock_SecureBoot.cer") -Force

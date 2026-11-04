@@ -86,6 +86,15 @@ CARD_PROFILES = {
     "3090": {"min_unlocked": 115.0, "threshold": 95.0, "stock_typical": 72.0},
     "3080 ti": {"min_unlocked": 110.0, "threshold": 92.0, "stock_typical": 70.0},
     "3080": {"min_unlocked": 95.0, "threshold": 80.0, "stock_typical": 62.0},
+    "titan rtx": {"min_unlocked": 115.0, "threshold": 95.0, "stock_typical": 65.0},
+    "2080 ti": {"min_unlocked": 105.0, "threshold": 85.0, "stock_typical": 54.0},
+    "2080 super": {"min_unlocked": 80.0, "threshold": 65.0, "stock_typical": 42.0},
+    "2080": {"min_unlocked": 72.0, "threshold": 60.0, "stock_typical": 38.0},
+    "2070 super": {"min_unlocked": 65.0, "threshold": 52.0, "stock_typical": 34.0},
+    "2070": {"min_unlocked": 55.0, "threshold": 45.0, "stock_typical": 29.0},
+    "2060 super": {"min_unlocked": 50.0, "threshold": 42.0, "stock_typical": 27.0},
+    "2060": {"min_unlocked": 42.0, "threshold": 35.0, "stock_typical": 22.0},
+    "cmp 50hx": {"min_unlocked": 105.0, "threshold": 85.0, "stock_typical": 54.0},
 }
 
 profile = None
@@ -99,6 +108,8 @@ if profile is None:
     if props.major == 8 and props.minor == 9:
         threshold = sm_count * 1.35
     elif props.major == 8 and props.minor == 6:
+        threshold = sm_count * 1.15
+    elif props.major == 7 and props.minor == 5:
         threshold = sm_count * 1.15
     else:
         threshold = sm_count * 1.0
@@ -128,7 +139,7 @@ avg_ms = total_ms / runs
 tflops = (flops_per_gemm / (avg_ms * 1e-3)) / 1e12
 
 print("=" * 68)
-print("     UNIVERSAL GPU RATE-LIMITER STATUS CHECK (ADA & AMPERE)")
+print("     UNIVERSAL GPU RATE-LIMITER STATUS CHECK (ADA, AMPERE & TURING)")
 print("=" * 68)
 print(f"  GPU Hardware       : {gpu_name}")
 print(f"  Architecture       : {arch} ({sm_count} Streaming Multiprocessors)")

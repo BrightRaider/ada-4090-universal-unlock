@@ -23,8 +23,18 @@ static inline BOOLEAN GuIsAmpereDeviceId(UINT16 dev) {
           dev == 0x2207U);   /* CMP 90HX */
 }
 
+static inline BOOLEAN GuIsTuringDeviceId(UINT16 dev) {
+  return (dev == 0x1e04U || dev == 0x1e07U || dev == 0x1e02U ||  /* RTX 2080 Ti, TITAN RTX (TU102) */
+          dev == 0x1e09U ||                                      /* CMP 50HX */
+          dev == 0x1e30U || dev == 0x1e35U ||                    /* Quadro RTX 6000, 8000 */
+          dev == 0x1e81U || dev == 0x1e82U || dev == 0x1e87U ||  /* RTX 2080 SUPER, RTX 2080 (TU104) */
+          dev == 0x1e84U || dev == 0x1eb0U || dev == 0x1eb1U ||  /* RTX 2070 SUPER, Quadro RTX 5000/4000 */
+          dev == 0x1f02U || dev == 0x1f07U || dev == 0x1f06U ||  /* RTX 2070, 2060 SUPER (TU106) */
+          dev == 0x1f47U || dev == 0x1f03U || dev == 0x1f08U || dev == 0x1f12U || dev == 0x1f36U);
+}
+
 static inline BOOLEAN GuIsSupportedDeviceId(UINT16 dev) {
-  return GuIsAdaDeviceId(dev) || GuIsAmpereDeviceId(dev);
+  return GuIsAdaDeviceId(dev) || GuIsAmpereDeviceId(dev) || GuIsTuringDeviceId(dev);
 }
 
 static inline BOOLEAN GuIsAdaPciId(UINT32 id) {
@@ -35,6 +45,11 @@ static inline BOOLEAN GuIsAdaPciId(UINT32 id) {
 static inline BOOLEAN GuIsAmperePciId(UINT32 id) {
   if ((id & 0xffffU) != 0x10deU) return FALSE;
   return GuIsAmpereDeviceId((UINT16)(id >> 16));
+}
+
+static inline BOOLEAN GuIsTuringPciId(UINT32 id) {
+  if ((id & 0xffffU) != 0x10deU) return FALSE;
+  return GuIsTuringDeviceId((UINT16)(id >> 16));
 }
 
 static inline BOOLEAN GuIsSupportedPciId(UINT32 id) {
@@ -98,6 +113,7 @@ typedef struct {
   UINT16 saved_devctl, saved_devctl2;
   UINT8 pcie_version;
   BOOLEAN is_ampere;
+  BOOLEAN is_turing;
   BOOLEAN fault, retained, started, quiesced, armed, owned, display_ok, saved;
   BOOLEAN profile_verified, prom_verified;
   BOOLEAN transaction_attempted;

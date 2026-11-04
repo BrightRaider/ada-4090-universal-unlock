@@ -20,6 +20,7 @@ int gpu_unlock_booter_validate(enum gpu_unlock_booter_arch arch,
 	if (!hdr)
 		return GU_DIAG(-EINVAL);
 	switch (arch) {
+	case GU_BOOTER_TU10X:
 	case GU_BOOTER_GA10X:
 		expected_image = 60416;
 		data_off = 35328;

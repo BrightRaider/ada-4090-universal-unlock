@@ -5,6 +5,7 @@
 enum gpu_unlock_booter_arch {
 	GU_BOOTER_GA10X = 0,
 	GU_BOOTER_AD10X = 1,
+	GU_BOOTER_TU10X = 2,
 };
 
 #endif

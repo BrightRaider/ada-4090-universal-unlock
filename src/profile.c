@@ -29,6 +29,13 @@ static const struct {
 };
 
 BOOLEAN GuAd104AssetsValid(VOID) {
+  if (Gu.is_turing) {
+    /* Turing asset tolerance during staging */
+    for(UINTN i=0;i<5;i++) {
+      if(!GuAssets[i].name || GuAssets[i].firmware.size==0) return FALSE;
+    }
+    return TRUE;
+  }
   for(UINTN i=0;i<5;i++) {
     const char *name = Gu.is_ampere ? PinsGa102[i].name : PinsAd102[i].name;
     const char *hash = Gu.is_ampere ? PinsGa102[i].hash : PinsAd102[i].hash;

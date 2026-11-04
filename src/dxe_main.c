@@ -38,6 +38,7 @@ static EFI_STATUS Discover(EFI_HANDLE image, EFI_SYSTEM_TABLE *t) {
   Gu.handle = target;
   Gu.device_id = detected_dev_id;
   Gu.is_ampere = GuIsAmpereDeviceId(detected_dev_id);
+  Gu.is_turing = GuIsTuringDeviceId(detected_dev_id);
   UINT32 c[64];
   UINTN seg, bus, dev, fun;
   GU_CAPS caps;
@@ -68,6 +69,8 @@ EFI_STATUS EFIAPI AdaUnlockDriverEntryPoint(EFI_HANDLE image, EFI_SYSTEM_TABLE *
 
   if (Gu.is_ampere) {
     GuLog("DXE-DRIVER: Ampere GPU detected: Device ID 0x%04x\n", (unsigned)Gu.device_id);
+  } else if (Gu.is_turing) {
+    GuLog("DXE-DRIVER: Turing GPU detected: Device ID 0x%04x\n", (unsigned)Gu.device_id);
   } else {
     GuLog("DXE-DRIVER: Ada Lovelace GPU detected: Device ID 0x%04x\n", (unsigned)Gu.device_id);
   }

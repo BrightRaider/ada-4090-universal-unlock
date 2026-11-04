@@ -52,7 +52,7 @@ static EFI_STATUS Discover(EFI_HANDLE image,EFI_SYSTEM_TABLE *t) {
 
   GuInit(t->BootServices,io);Gu.image=image;Gu.handle=target;
 
-  Gu.device_id=detected_dev_id;Gu.is_ampere=GuIsAmpereDeviceId(detected_dev_id);
+  Gu.device_id=detected_dev_id;Gu.is_ampere=GuIsAmpereDeviceId(detected_dev_id);Gu.is_turing=GuIsTuringDeviceId(detected_dev_id);
 
   UINT32 c[64];UINTN seg,bus,dev,fun;GU_CAPS caps;
 
