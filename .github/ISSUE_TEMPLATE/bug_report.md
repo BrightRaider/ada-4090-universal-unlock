@@ -28,3 +28,10 @@ A clear and concise description of what happened (e.g. halted at pre-flight, scr
 ```text
 PASTE FULL CONTENTS OF RUNxxxx.TXT HERE
 ```
+
+---
+
+### 🚀 Community Benchmarks (Once Resolved / "Little Thank-You")
+> [!TIP]
+> **Once your issue is resolved and your unlock is running:**  
+> As a small thank-you to the project and community, feel free to run **`Check-GPU-Unlock.bat`** (or your favorite PyTorch / ComfyUI / FLUX benchmark) and post a quick screenshot or your TFLOPS numbers here! It helps everyone see real-world performance gains across different hardware setups.
