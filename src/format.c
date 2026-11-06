@@ -37,6 +37,10 @@ size_t GuFormatV(char *destination,size_t capacity,const char *format,va_list ar
       else if(length==3)value=va_arg(args,size_t);
       else value=va_arg(args,unsigned int);
       if(kind!='u')base=16;
+    } else if(kind=='p') {
+      base=16;
+      alternate=1;
+      value=(uint64_t)(uintptr_t)va_arg(args,void *);
     } else goto invalid;
     char digits[32];unsigned n=0;int prefix=alternate && base==16 && value;
     const char *alphabet=kind=='X'?"0123456789ABCDEF":"0123456789abcdef";

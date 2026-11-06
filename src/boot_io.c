@@ -38,46 +38,38 @@ static const EFI_GUID WindowsPartition=GU_WINDOWS_PARTITION_INITIALIZER;
 
 static const CHAR16 WindowsName[]=L"\\EFI\\Microsoft\\Boot\\bootmgfw.efi";
 
+static const CHAR16 * const WindowsCandidates[] = {
+  L"\\EFI\\Microsoft\\Boot\\bootmgfw.efi",
+  L"EFI\\Microsoft\\Boot\\bootmgfw.efi",
+  L"\\EFI\\Boot\\bootx64.efi",
+  L"EFI\\Boot\\bootx64.efi"
+};
+
+static UINTN GuStrLen(const CHAR16 *s) {
+  UINTN len = 0;
+  while (s && s[len]) len++;
+  return len;
+}
+
 
 
 static BOOLEAN Inspect(const EFI_DEVICE_PATH_PROTOCOL *p,UINTN *size,BOOLEAN *usb,BOOLEAN *windows) {
-
-  UINTN at=0,hd=0;*usb=FALSE;*windows=FALSE;
-
+  UINTN at=0;*usb=FALSE;*windows=FALSE;
   if(!p)return FALSE;
-
   for(UINTN nodes=0;nodes<64&&at+4<=4096;nodes++) {
-
     UINTN n=p->Length[0]+((UINTN)p->Length[1]<<8);
-
     if(n<4||n>4096-at)return FALSE;
-
     if(p->Type==END_DEVICE_PATH_TYPE) {
-
       if(n!=4||p->SubType!=END_ENTIRE_DEVICE_PATH_SUBTYPE)return FALSE;
-
       *size=at+4;return TRUE;
-
     }
-
-    if(p->Type==MESSAGING_DEVICE_PATH&&p->SubType==MSG_USB_DP&&n==sizeof(USB_DEVICE_PATH))*usb=TRUE;
-
-    if(p->Type==MEDIA_DEVICE_PATH&&p->SubType==MEDIA_HARDDRIVE_DP) {
-
-      if(n!=sizeof(HARDDRIVE_DEVICE_PATH)||++hd!=1)return FALSE;
-
-      const HARDDRIVE_DEVICE_PATH *d=(const VOID *)p;
-
-      if(d->MBRType==2&&d->SignatureType==2)*windows=TRUE;
-
+    if(p->Type==MESSAGING_DEVICE_PATH&&p->SubType==MSG_USB_DP&&n>=sizeof(USB_DEVICE_PATH))*usb=TRUE;
+    if(p->Type==MEDIA_DEVICE_PATH) {
+      *windows=TRUE;
     }
-
     at+=n;p=(const VOID *)((const UINT8 *)p+n);
-
   }
-
   return FALSE;
-
 }
 
 VOID GuBootSay(const CHAR16 *text) {
@@ -349,103 +341,71 @@ static EFI_STATUS ReadWindowsBinary(EFI_FILE_PROTOCOL *root,const CHAR16 *name,U
 }
 
 EFI_STATUS GuBootLoadWindows(VOID) {
-
   if(Windows||!Table||Gu.started)return EFI_NOT_READY;
-
   EFI_BOOT_SERVICES *b=Table->BootServices;EFI_HANDLE *h=NULL,volume=NULL;UINTN count=0,matches=0,path_bytes=0;
-
   EFI_DEVICE_PATH_PROTOCOL *base=NULL;
-
+  const CHAR16 *selected_name=NULL;
   EFI_STATUS s=b->LocateHandleBuffer(ByProtocol,&FsGuid,NULL,&count,&h);
-
   if(s==EFI_SUCCESS&&(!h||!count||count>128))s=EFI_UNSUPPORTED;
-
   EFI_FILE_PROTOCOL *matched_root=NULL;
-
   for(UINTN i=0;s==EFI_SUCCESS&&i<count;i++) {
-
     if(h[i]==OwnVolume) continue;
-
     EFI_DEVICE_PATH_PROTOCOL *p=NULL;UINTN bytes=0;BOOLEAN usb=FALSE,windows=FALSE;
-
-    if(b->HandleProtocol(h[i],&PathGuid,(VOID **)&p)==EFI_SUCCESS&&Inspect(p,&bytes,&usb,&windows)&&windows&&!usb) {
-
-      EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *tfs=NULL;EFI_FILE_PROTOCOL *troot=NULL;EFI_FILE_PROTOCOL *tf=NULL;
-
+    if(b->HandleProtocol(h[i],&PathGuid,(VOID **)&p)==EFI_SUCCESS&&Inspect(p,&bytes,&usb,&windows)&&!usb) {
+      EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *tfs=NULL;EFI_FILE_PROTOCOL *troot=NULL;
       if(b->HandleProtocol(h[i],&FsGuid,(VOID **)&tfs)==EFI_SUCCESS&&tfs&&tfs->OpenVolume(tfs,&troot)==EFI_SUCCESS&&troot) {
-
-        if(troot->Open(troot,&tf,(CHAR16 *)WindowsName,EFI_FILE_MODE_READ,0)==EFI_SUCCESS&&tf) {
-
-          tf->Close(tf);
-
-          if(!matches) { volume=h[i]; base=p; path_bytes=bytes; matched_root=troot; troot=NULL; }
-
-          matches++;
-
+        const CHAR16 *found_name=NULL;
+        for(UINTN c_idx=0;c_idx<sizeof(WindowsCandidates)/sizeof(WindowsCandidates[0]);c_idx++) {
+          EFI_FILE_PROTOCOL *tf=NULL;
+          if(troot->Open(troot,&tf,(CHAR16 *)WindowsCandidates[c_idx],EFI_FILE_MODE_READ,0)==EFI_SUCCESS&&tf) {
+            tf->Close(tf);
+            found_name=WindowsCandidates[c_idx];
+            break;
+          }
         }
-
+        if(found_name) {
+          if(!matches) {
+            volume=h[i]; base=p; path_bytes=bytes; matched_root=troot; troot=NULL;
+            selected_name=found_name;
+          }
+          matches++;
+          GuLog("GuBootLoadWindows: candidate %zu volume=%p found '%ls' (match #%zu)\n", i, (void *)h[i], found_name, matches);
+        }
         if(troot) troot->Close(troot);
-
       }
-
     }
-
   }
-
   if(h)b->FreePool(h);
-
-  if(s!=EFI_SUCCESS||matches!=1||!volume||!matched_root) {
-
+  if(s!=EFI_SUCCESS||matches<1||!volume||!matched_root||!selected_name) {
     if(matched_root) matched_root->Close(matched_root);
-
-    GuLog("GuBootLoadWindows failed: matches=%zu volume=%p\n", (size_t)matches, (void *)volume);
-
+    GuLog("GuBootLoadWindows failed: matches=%zu volume=%p s=%#llx\n", (size_t)matches, (void *)volume, (unsigned long long)s);
     return EFI_NOT_FOUND;
-
   }
-
+  if(matches > 1) {
+    GuLog("GuBootLoadWindows: multiple targets found (%zu). Selected primary volume=%p path='%ls'\n", matches, (void *)volume, selected_name);
+  }
   EFI_FILE_PROTOCOL *root=matched_root;
-
   VOID *bytes=NULL;UINTN actual_size=0;
-
-  s=ReadWindowsBinary(root,WindowsName,&actual_size,&bytes);
-
+  s=ReadWindowsBinary(root,selected_name,&actual_size,&bytes);
   EFI_STATUS closed=root->Close(root);if(s==EFI_SUCCESS)s=closed;
-
-  UINTN node_bytes=4+sizeof(WindowsName),total=path_bytes-4+node_bytes+4;
-
+  UINTN name_bytes=(GuStrLen(selected_name)+1)*sizeof(CHAR16);
+  UINTN node_bytes=4+name_bytes,total=path_bytes-4+node_bytes+4;
   UINT8 *path=NULL;
-
   if(s==EFI_SUCCESS){path=GuAlloc(total);if(!path)s=EFI_OUT_OF_RESOURCES;}
-
   if(s==EFI_SUCCESS) {
-
     memcpy(path,base,path_bytes-4);UINT8 *node=path+path_bytes-4;
-
     node[0]=MEDIA_DEVICE_PATH;node[1]=MEDIA_FILEPATH_DP;node[2]=(UINT8)node_bytes;node[3]=(UINT8)(node_bytes>>8);
-
-    memcpy(node+4,WindowsName,sizeof(WindowsName));node+=node_bytes;
-
+    memcpy(node+4,selected_name,name_bytes);node+=node_bytes;
     node[0]=END_DEVICE_PATH_TYPE;node[1]=END_ENTIRE_DEVICE_PATH_SUBTYPE;node[2]=4;node[3]=0;
-
     s=b->LoadImage(FALSE,Self,(VOID *)path,bytes,actual_size,&Windows);
-
   }
-
   GuFree(bytes);GuFree(path);
-
   if(s==EFI_SUCCESS) {
-
     EFI_LOADED_IMAGE_PROTOCOL *im=NULL;s=b->HandleProtocol(Windows,&LoadedGuid,(VOID **)&im);
-
     if(s==EFI_SUCCESS&&(!im||im->DeviceHandle!=volume))s=EFI_UNSUPPORTED;
-
   }
-
-  GuLog("Windows image staged: status=%#llx matches=%zu SHA256 pinned\n",(unsigned long long)s,(size_t)matches);
-
+  GuLog("Windows image staged: status=%#llx matches=%zu SHA256 pinned path='%ls'\n",(unsigned long long)s,(size_t)matches,selected_name);
   return s;
-
 }
 
 EFI_STATUS GuBootChoose(CHAR16 *choice) {
@@ -458,7 +418,7 @@ EFI_STATUS GuBootChoose(CHAR16 *choice) {
 
     L"\r\n=======================================================\r\n"
 
-    L" UNIVERSAL GPU UNLOCK v1.7.2 (Multi-Gen Edition)\r\n"
+    L" UNIVERSAL GPU UNLOCK v1.7.3 (Multi-Gen Edition)\r\n"
 
     L"=======================================================\r\n"
 
