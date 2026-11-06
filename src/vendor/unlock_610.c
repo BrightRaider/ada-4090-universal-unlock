@@ -25,6 +25,7 @@
 #define SEC2_BASE 0x00840000u
 #define SEC2_FBIF 0x00840600u
 #define SEC2_FALCON2 0x00841000u
+#define GU_BOOT_TIMEOUT_US 20000000u /* 20s budget for SEC2 firmware streaming on secondary PCIe slots / multi-dGPU */
 /* SS0 holds eight 4-bit fields; SS1 stores only its low 4 bits (0x2 when
  * cold). Both get the same per-field value 8. */
 #define GU_SS0_UNLOCK 0x88888888u
@@ -565,8 +566,8 @@ static void log_falcon_failure(struct unlock_transaction_work *work,
 {
 	u32 wpr_lo = 0, wpr_hi = 0;
 
-	dev_err(&work->pdev->dev, "early PLM failed: pci=%#x cpuctl=%#x plm=%#x entry=%#x budget_us=5000000\n",
-		identity, cpuctl, plm, work->plm_entry);
+	dev_err(&work->pdev->dev, "early PLM failed: pci=%#x cpuctl=%#x plm=%#x entry=%#x budget_us=%u\n",
+		identity, cpuctl, plm, work->plm_entry, GU_BOOT_TIMEOUT_US);
 	read_bar(work, 0x001fa824, &wpr_lo);
 	read_bar(work, 0x001fa828, &wpr_hi);
 	dev_err(&work->pdev->dev, "wpr2=%#x:%#x\n", wpr_hi, wpr_lo);
@@ -642,7 +643,7 @@ static int falcon_hs(struct unlock_transaction_work *work, const struct falcon_e
 	else
 		write_bar(work, eng->base + 0x100, 1u << 1);
 	if (wait_plm) {
-		ktime_t deadline = ktime_add_us(ktime_get(), 5000000);
+		ktime_t deadline = ktime_add_us(ktime_get(), GU_BOOT_TIMEOUT_US);
 
 		for (;;) {
 			u32 plm, engine, identity, marker = 0;
@@ -668,7 +669,7 @@ static int falcon_hs(struct unlock_transaction_work *work, const struct falcon_e
 			usleep_range(50, 100);
 		}
 	}
-	ret = poll_us(work, eng->base + 0x100, 1u << 4, 1u << 4, 5000000, true);
+	ret = poll_us(work, eng->base + 0x100, 1u << 4, 1u << 4, GU_BOOT_TIMEOUT_US, true);
 	if (ret)
 		return GU_RESULT(ret);
 	return 0;
@@ -1349,15 +1350,18 @@ static int unlock_transaction_boot(struct unlock_transaction_work *work)
 			upper_32_bits(work->meta_dma), true);
 	if (!is_ad102(work)) {
 		if (ret) return GU_RESULT(ret);
-		halt_ret = poll_us(work, SEC2_BASE + 0x100, 0x10, 0x10, 5000000, true);
-		if (halt_ret) return GU_RESULT(halt_ret);
+		halt_ret = poll_us(work, SEC2_BASE + 0x100, 0x10, 0x10, GU_BOOT_TIMEOUT_US, true);
+		if (halt_ret) {
+			log_falcon_state(work, "sec2", &gu_sec2);
+			return GU_RESULT(halt_ret);
+		}
 		work->sec2_halt_verified = true;
 		work->payload_verified = true;
 		return 0;
 	}
 	/* The marker precedes the cleanup tail. Wait for its exit before changing
 	 * firmware-visible metadata or applying selectors; a live SEC2 retains DMA. */
-	halt_ret = ret ? ret : poll_us(work, SEC2_BASE + 0x100, 0x10, 0x10, 5000000, true);
+	halt_ret = ret ? ret : poll_us(work, SEC2_BASE + 0x100, 0x10, 0x10, GU_BOOT_TIMEOUT_US, true);
 	state_ret = read_bar(work, SEC2_BASE + 0x40, &marker);
 	state_ret |= read_bar(work, SEC2_BASE + 0x100, &cpuctl);
 	state_ret |= read_bar(work, SEC2_BASE + 0x94, &debug);
