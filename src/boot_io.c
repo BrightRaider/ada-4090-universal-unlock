@@ -90,6 +90,8 @@ VOID GuBootSay(const CHAR16 *text) {
 
 VOID GuBootSilence(VOID){Silent=TRUE;}
 
+VOID GuBootUnsilence(VOID){Silent=FALSE;}
+
 VOID GuLog(const char *format,...) {
 
   CHAR8 buffer[2048];va_list args;va_start(args,format);
@@ -456,7 +458,7 @@ EFI_STATUS GuBootChoose(CHAR16 *choice) {
 
     L"\r\n=======================================================\r\n"
 
-    L" UNIVERSAL GPU UNLOCK v1.6.3 (Ada & Ampere Edition)\r\n"
+    L" UNIVERSAL GPU UNLOCK v1.7.2 (Multi-Gen Edition)\r\n"
 
     L"=======================================================\r\n"
 

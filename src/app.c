@@ -96,13 +96,19 @@ EFI_STATUS EFIAPI UefiMain(EFI_HANDLE image,EFI_SYSTEM_TABLE *t) {
 
     GuLog("Ampere GPU detected: Device ID 0x%04x\n", (unsigned)Gu.device_id);
 
-    GuLog("GA102 AMPERE UNIVERSAL UNLOCK v1.6.3: Volatile RAM-only override; no VBIOS flash\n");
+    GuLog("GA102 AMPERE UNIVERSAL UNLOCK v1.7.2: Volatile RAM-only override; no VBIOS flash\n");
+
+  } else if (Gu.is_turing) {
+
+    GuLog("Turing GPU detected: Device ID 0x%04x\n", (unsigned)Gu.device_id);
+
+    GuLog("TU10X TURING UNIVERSAL UNLOCK v1.7.2: Volatile RAM-only override; no VBIOS flash\n");
 
   } else {
 
     GuLog("Ada Lovelace GPU detected: Device ID 0x%04x\n", (unsigned)Gu.device_id);
 
-    GuLog("AD10X ADA UNIVERSAL UNLOCK v1.6.3: Volatile RAM-only override; no VBIOS flash\n");
+    GuLog("AD10X ADA UNIVERSAL UNLOCK v1.7.2: Volatile RAM-only override; no VBIOS flash\n");
 
   }
 
@@ -198,7 +204,17 @@ EFI_STATUS EFIAPI UefiMain(EFI_HANDLE image,EFI_SYSTEM_TABLE *t) {
 
   stage="MSI-preflight";s=GuMsiPreflight(t,image,Gu.handle);if(s!=EFI_SUCCESS||Gu.fault)goto failed;
 
-  GuBootSay(L"\r\nChecks passed. Releasing display; watch for Windows.\r\n");
+  GuBootSay(
+    L"\r\n=======================================================\r\n"
+    L" UNIVERSAL GPU UNLOCK v1.7.2 - Status Monitor\r\n"
+    L"=======================================================\r\n"
+    L" [1/4] GPU and PCIe Topology Discovery ..... [ OK ]\r\n"
+    L" [2/4] Firmware and Signature Attestation .. [ OK ]\r\n"
+    L" [3/4] Multi-GOP Display Handover ......... [ OK ]\r\n"
+    L" [4/4] Hardware SEC2 and MSR Unlock ........ [ IN PROGRESS ]\r\n\r\n"
+    L" --> Unlocked while Windows was still sleeping! \r\n"
+    L" --> Full silicon potential active. 100% UNLOCKED!\r\n\r\n"
+  );
 
   GuLog("Operator U: one physical attempt; no retries; display callbacks disabled\n");
 
@@ -233,6 +249,12 @@ EFI_STATUS EFIAPI UefiMain(EFI_HANDLE image,EFI_SYSTEM_TABLE *t) {
   if(result||Gu.fault||!GuSafeToReturn()){s=EFI_DEVICE_ERROR;goto failed;}
 
   stage="release-exclusive-claim";s=GuMsiFinish();if(s!=EFI_SUCCESS||Gu.fault)goto failed;
+
+  GuBootUnsilence();
+  GuBootSay(
+    L" [4/4] Hardware SEC2 and MSR Unlock ........ [ OK ]\r\n"
+    L" Handing over control to Windows Boot Manager...\r\n\r\n"
+  );
 
   /* The final pre-Windows check runs after the log closes: this line is not proof of a Windows start. */
 

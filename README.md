@@ -223,7 +223,9 @@ If your system has UEFI Secure Boot enabled and you do not play games with kerne
 │   ├── vendor/                  <- V67 booter and FWSEC microcode interface
 │   └── Build-Experimental-MSVC.ps1 <- Automated MSVC build script
 ├── Setup.bat                    <- 1-Click Provisioner Launcher
-└── Setup-AdaUnlock.ps1          <- Automated PowerShell deployment tool
+├── Setup-AdaUnlock.ps1          <- Automated PowerShell deployment tool
+├── Check-GPU-Unlock.bat         <- Standalone Windows verification benchmark
+└── Toggle-Sleep-Button.bat      <- Non-invasive tool to hide/restore Start Menu Sleep button (S3 protection)
 ```
 
 ---
