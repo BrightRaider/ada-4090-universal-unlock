@@ -245,3 +245,12 @@ If your system has UEFI Secure Boot enabled and you do not play games with kerne
 * **Zagitta & WildFlash1st:** For pioneering the Linux `gpu-unlock` research and `cmp90hx-unlock` rejoining methodologies.
 * **TOTORONG & JustAResearcher:** For early proof-of-concept Windows UEFI implementations.
 * **Igor Wallossek (Igor'sLAB):** For in-depth technical analysis, power verification, and community discussion.
+
+---
+
+## ☕ Support the Project
+
+If Universal GPU Unlock accelerated your AI workflows, saved you render time, or helped unlock your graphics card's full potential, consider buying me a coffee to support continued development and hardware research:
+
+<a href='https://ko-fi.com/brightraider' target='_blank'><img height='36' style='border:0px;height:36px;' src='https://storage.ko-fi.com/cdn/kofi2.png?v=3' border='0' alt='Buy Me a Coffee at ko-fi.com' /></a>
+
