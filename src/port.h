@@ -11,7 +11,7 @@
 
 static inline BOOLEAN GuIsAdaDeviceId(UINT16 dev) {
   return (dev == 0x2684U || dev == 0x2685U ||  /* RTX 4090, 4090D (AD102) */
-          dev == 0x2704U || dev == 0x2703U || dev == 0x2705U); /* RTX 4080, 4080 SUPER, 4070 Ti SUPER (AD103) */
+          dev == 0x2702U || dev == 0x2704U || dev == 0x2703U || dev == 0x2705U); /* RTX 4080, 4080 SUPER, 4070 Ti SUPER (AD103) */
 }
 
 static inline BOOLEAN GuIsAmpereDeviceId(UINT16 dev) {
@@ -20,7 +20,12 @@ static inline BOOLEAN GuIsAmpereDeviceId(UINT16 dev) {
           dev == 0x2206U ||  /* RTX 3080 Ti */
           dev == 0x220aU ||  /* RTX 3080 10GB */
           dev == 0x2216U ||  /* RTX 3080 12GB */
-          dev == 0x2207U);   /* CMP 90HX */
+          dev == 0x2207U ||  /* CMP 90HX */
+          dev == 0x2482U ||  /* RTX 3070 Ti (GA104) */
+          dev == 0x2484U ||  /* RTX 3070 (GA104) */
+          dev == 0x2487U || dev == 0x2488U || dev == 0x2489U || /* RTX 3060 Ti (GA104) */
+          dev == 0x2503U || dev == 0x2504U || dev == 0x2507U || dev == 0x2508U || /* RTX 3060 (GA106) */
+          dev == 0x2520U || dev == 0x2560U);
 }
 
 static inline BOOLEAN GuIsTuringDeviceId(UINT16 dev) {

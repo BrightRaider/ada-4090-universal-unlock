@@ -27,13 +27,17 @@ typedef uint64_t u64;
 
 static inline bool gpu_is_ada_device(u16 dev) {
 	return (dev == 0x2684u || dev == 0x2685u ||  /* RTX 4090, 4090D (AD102) */
-	        dev == 0x2704u || dev == 0x2703u || dev == 0x2705u); /* RTX 4080, 4080 SUPER, 4070 Ti SUPER (AD103) */
+	        dev == 0x2702u || dev == 0x2704u || dev == 0x2703u || dev == 0x2705u); /* RTX 4080, 4080 SUPER, 4070 Ti SUPER (AD103) */
 }
 
 static inline bool gpu_is_ampere_device(u16 dev) {
 	return (dev == 0x2204u || dev == 0x2208u ||  /* RTX 3090, 3090 Ti */
 	        dev == 0x2206u || dev == 0x220au ||  /* RTX 3080 Ti, 3080 10GB */
-	        dev == 0x2216u || dev == 0x2207u);   /* RTX 3080 12GB, CMP 90HX */
+	        dev == 0x2216u || dev == 0x2207u ||  /* RTX 3080 12GB, CMP 90HX */
+	        dev == 0x2482u || dev == 0x2484u ||  /* RTX 3070 Ti, RTX 3070 (GA104) */
+	        dev == 0x2487u || dev == 0x2488u || dev == 0x2489u || /* RTX 3060 Ti (GA104) */
+	        dev == 0x2503u || dev == 0x2504u || dev == 0x2507u || dev == 0x2508u || /* RTX 3060 (GA106) */
+	        dev == 0x2520u || dev == 0x2560u);
 }
 
 static inline bool gpu_is_turing_device(u16 dev) {
