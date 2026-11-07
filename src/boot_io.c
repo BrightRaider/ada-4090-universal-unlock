@@ -422,7 +422,7 @@ EFI_STATUS GuBootChoose(CHAR16 *choice) {
 
     L"\r\n=======================================================\r\n"
 
-    L" UNIVERSAL GPU UNLOCK v1.7.4 (Multi-Gen Edition)\r\n"
+    L" UNIVERSAL GPU UNLOCK v1.7.5 (Multi-Gen Edition)\r\n"
 
     L"=======================================================\r\n"
 

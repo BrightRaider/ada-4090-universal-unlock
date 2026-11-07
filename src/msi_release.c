@@ -649,7 +649,9 @@ BOOLEAN GuMsiReadyForWindows(VOID) {
   /* Fresh status after USB Close and before StartImage; no log callbacks. */
   UINT32 chip=GuRead32(0),cpu=GuRead32(0x110100),hi=GuRead32(0x1fa828);
   UINT32 ss0=GuRead32(0x82381c),ss1=GuRead32(0x823820),readout=GuRead32(0x823818),plm=GuRead32(0x823804);
-  return !Gu.fault&&chip==0x192000a1&&(cpu&0x10)&&cpu!=0xffffffff&&
+  BOOLEAN chip_ok = (chip!=0xffffffff && (chip&0xffff0000)!=0xbadf0000 &&
+                     ((chip>>24)==0x19 || (chip>>24)==0x18 || (chip>>24)==0x16));
+  return !Gu.fault&&chip_ok&&(cpu&0x10)&&cpu!=0xffffffff&&
     (cpu&0xffff0000)!=0xbadf0000&&!(hi>>4)&&ss0==0x88888888&&ss1==8&&
     !(readout&0x07ffffff)&&readout!=0xffffffff&&plm==0xffffffff;
 }

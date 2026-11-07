@@ -26,7 +26,7 @@
 
 ## ⚡ 60-Second Quick Start
 
-1. **Download:** Get the latest official release: **[Universal_GPU_Unlock_v1.7.4.zip](https://github.com/BrightRaider/universal-gpu-unlock/releases/latest)**.
+1. **Download:** Get the latest official release: **[Universal_GPU_Unlock_v1.7.5.zip](https://github.com/BrightRaider/universal-gpu-unlock/releases/latest)**.
 2. **Provision:** Extract the ZIP, insert a USB flash drive, and run **`Setup.bat`** (formats & sets up all boot files automatically).
 3. **Boot & Unlock:** Restart your PC, boot from the USB drive (`F8`/`F11`/`F12`), and press **`[U]`** for Standard Unlock.
    - The bootloader verifies your GPU, displays a live 4-stage status monitor, unlocks the card in RAM, and boots straight into Windows.

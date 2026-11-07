@@ -6,6 +6,15 @@ For packaged binaries and downloads, visit [GitHub Releases](https://github.com/
 
 ---
 
+## [v1.7.5] - 2026-11-07
+### Universal Silicon Verification & Black-Screen Handoff Fix (Resolves #9)
+- **Eliminated Black Screen on Non-4090 GPUs:** Resolved the post-unlock halt reported on RTX 4080 (AD103), RTX 30 Series (GA102), and RTX 20 Series (TU102).
+- **Universal Chip ID Validation:** In `GuMsiReadyForWindows()`, replaced legacy `chip == 0x192000a1` (AD102-only) with dynamic architecture validation across all Ada Lovelace (`0x19xxxxxx`), Ampere (`0x18xxxxxx`), and Turing (`0x16xxxxxx`) processors.
+- **Pre-Handoff Diagnostic Visibility:** Re-ordered final verification before USB log closure so that all post-FLR states remain fully logged.
+- **Pre-compiled & Authenticode-Signed Binaries:** MSVC binaries (`bin/BOOTX64.EFI` and `bin/AdaUnlockDxe.efi`) recompiled and signed with `Custom UEFI SecureBoot Key`.
+
+---
+
 ## [v1.7.4] - 2026-11-07
 ### Format Engine Wide-String Support & Bootloader Staging Fix (Resolves #8)
 - **Native Wide-String `%ls` Formatting:** Added full `%ls` wide-string / UTF-16 character decoding support to `src/format.c`. Previously, `%ls` format strings from storage volume diagnostics caused `GuFormatV` to return an unsupported length error, erroneously tripping the internal `Gu.fault` abort flag.
