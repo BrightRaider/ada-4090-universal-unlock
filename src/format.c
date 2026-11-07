@@ -16,7 +16,14 @@ size_t GuFormatV(char *destination,size_t capacity,const char *format,va_list ar
     else if(*format=='z'){length=3;format++;}
     char kind=*format;if(!kind)goto invalid;format++;
     if(kind=='s') {
-      if(length || alternate || zero || width)goto invalid;
+      if(alternate || zero || width)goto invalid;
+      if(length==1) {
+        const uint16_t *ws=va_arg(args,const uint16_t *);
+        if(!ws){const char *ns="(null)";while(*ns)put(&o,*ns++);continue;}
+        while(*ws){put(&o,(char)(*ws>127?'?':*ws));ws++;}
+        continue;
+      }
+      if(length)goto invalid;
       const char *s=va_arg(args,const char *);if(!s)s="(null)";while(*s)put(&o,*s++);continue;
     }
     if(kind=='c' || kind=='%') {

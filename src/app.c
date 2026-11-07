@@ -96,19 +96,19 @@ EFI_STATUS EFIAPI UefiMain(EFI_HANDLE image,EFI_SYSTEM_TABLE *t) {
 
     GuLog("Ampere GPU detected: Device ID 0x%04x\n", (unsigned)Gu.device_id);
 
-    GuLog("GA102 AMPERE UNIVERSAL UNLOCK v1.7.3: Volatile RAM-only override; no VBIOS flash\n");
+    GuLog("GA102 AMPERE UNIVERSAL UNLOCK v1.7.4: Volatile RAM-only override; no VBIOS flash\n");
 
   } else if (Gu.is_turing) {
 
     GuLog("Turing GPU detected: Device ID 0x%04x\n", (unsigned)Gu.device_id);
 
-    GuLog("TU10X TURING UNIVERSAL UNLOCK v1.7.3: Volatile RAM-only override; no VBIOS flash\n");
+    GuLog("TU10X TURING UNIVERSAL UNLOCK v1.7.4: Volatile RAM-only override; no VBIOS flash\n");
 
   } else {
 
     GuLog("Ada Lovelace GPU detected: Device ID 0x%04x\n", (unsigned)Gu.device_id);
 
-    GuLog("AD10X ADA UNIVERSAL UNLOCK v1.7.3: Volatile RAM-only override; no VBIOS flash\n");
+    GuLog("AD10X ADA UNIVERSAL UNLOCK v1.7.4: Volatile RAM-only override; no VBIOS flash\n");
 
   }
 
@@ -206,7 +206,7 @@ EFI_STATUS EFIAPI UefiMain(EFI_HANDLE image,EFI_SYSTEM_TABLE *t) {
 
   GuBootSay(
     L"\r\n=======================================================\r\n"
-    L" UNIVERSAL GPU UNLOCK v1.7.3 - Status Monitor\r\n"
+    L" UNIVERSAL GPU UNLOCK v1.7.4 - Status Monitor\r\n"
     L"=======================================================\r\n"
     L" [1/4] GPU and PCIe Topology Discovery ..... [ OK ]\r\n"
     L" [2/4] Firmware and Signature Attestation .. [ OK ]\r\n"

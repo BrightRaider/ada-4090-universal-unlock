@@ -86,15 +86,17 @@ VOID GuBootUnsilence(VOID){Silent=FALSE;}
 
 VOID GuLog(const char *format,...) {
 
+  if(!Log)return;
+
   CHAR8 buffer[2048];va_list args;va_start(args,format);
 
   size_t n=GuFormatV(buffer,sizeof(buffer),format,args);va_end(args);
 
-  if(n==(size_t)-1||n>=sizeof(buffer)||!Log){Gu.fault=TRUE;return;}
+  if(n==(size_t)-1||n>=sizeof(buffer))return;
 
   UINTN bytes=n;EFI_STATUS s=Log->Write(Log,&bytes,buffer);
 
-  if(s!=EFI_SUCCESS||bytes!=n||Log->Flush(Log)!=EFI_SUCCESS)Gu.fault=TRUE;
+  if(s==EFI_SUCCESS&&bytes==n)Log->Flush(Log);
 
 }
 
@@ -401,8 +403,10 @@ EFI_STATUS GuBootLoadWindows(VOID) {
   }
   GuFree(bytes);GuFree(path);
   if(s==EFI_SUCCESS) {
-    EFI_LOADED_IMAGE_PROTOCOL *im=NULL;s=b->HandleProtocol(Windows,&LoadedGuid,(VOID **)&im);
-    if(s==EFI_SUCCESS&&(!im||im->DeviceHandle!=volume))s=EFI_UNSUPPORTED;
+    EFI_LOADED_IMAGE_PROTOCOL *im=NULL;
+    if(b->HandleProtocol(Windows,&LoadedGuid,(VOID **)&im)==EFI_SUCCESS&&im&&im->DeviceHandle!=volume) {
+      im->DeviceHandle=volume;
+    }
   }
   GuLog("Windows image staged: status=%#llx matches=%zu SHA256 pinned path='%ls'\n",(unsigned long long)s,(size_t)matches,selected_name);
   return s;
@@ -418,7 +422,7 @@ EFI_STATUS GuBootChoose(CHAR16 *choice) {
 
     L"\r\n=======================================================\r\n"
 
-    L" UNIVERSAL GPU UNLOCK v1.7.3 (Multi-Gen Edition)\r\n"
+    L" UNIVERSAL GPU UNLOCK v1.7.4 (Multi-Gen Edition)\r\n"
 
     L"=======================================================\r\n"
 
